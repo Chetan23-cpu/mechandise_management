@@ -1,0 +1,197 @@
+.main{
+    width: 100%;
+    background: linear-gradient(to bottom, #faebd7, #fdf6ec);
+    height: 120vh;
+    color: black;
+}
+.heading{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    padding-top: 40px;
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    gap:2px;
+    word-spacing: 3px;
+    color: #000075;
+}
+
+.form{
+
+    width: 50%;
+    margin: 30px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    text-align: center;
+    box-shadow: 
+        6px 6px 14px rgba(163, 168, 175, 0.55),   
+        -6px -6px 14px rgba(255, 255, 255, 0.85); 
+
+    background-color: #e5e7eb; 
+    border-radius: 10px;
+    padding: 30px;
+    flex-direction: column;
+}
+
+.section{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 20px 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input{
+    /* border: 1px solid; */
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+    font-weight: 100;
+    padding: 10px 40px;
+    font-size: 12px;
+    width: 40vh;
+}
+.input_p{
+    /* border: 1px solid; */
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+    font-weight: 100;
+    padding: 10px 40px;
+    font-size: 12px;
+    width: 24vh;
+}
+.input_q{
+    /* border: 1px solid; */
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+    font-weight: 100;
+    padding: 10px 5px;
+    font-size: 12px;
+    width: 10vh;
+    color: black;
+}
+
+.request{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 20px 50px;
+    gap: 20px;
+}
+
+.submit, .cancel, .ok{
+   
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+
+.submit{
+     width: 50vh;
+     background-color: #95bb72;
+}
+
+.cancel{
+    width:20vh;
+    background-color: #de0a26;;
+}
+
+.submit:hover,
+.cancel:hover{
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.submit:active,
+.cancel:active{
+    transform: translateY(1px) scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirmCard {
+  background: #fff;
+  padding: 24px 32px; 
+  border-radius: 8px;
+  text-align: center;
+  min-width: 280px;
+  color: black;
+  gap: 2px;
+}
+
+.ok{
+     width: 25vh;
+     background-color: #95bb72;
+     margin-top: 20px;
+}
+
+.productInputs {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.plus{
+    font-size: 25px;
+    cursor: pointer;
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+.plus:hover{
+    transform: translateY(-2px) scale(1.05);
+}
+
+.plus:active{
+    transform: translateY(1px) scale(1);
+}
+
+.productSection {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 20px 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.productRows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}

@@ -1,0 +1,112 @@
+.card {
+    width: 100%;
+    max-width: 420px;
+    min-width: 320px;
+    height: auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    background-color: aliceblue;
+    overflow: hidden;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalheader{
+    background-color: #5C5CFF;
+    color: aliceblue;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    font-size: 24px;
+    white-space: nowrap;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    align-items: center;
+}
+
+.inputfield{
+    background-color: aliceblue;
+    color: black;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 30px;
+    gap: 16px;
+}
+
+.modallabel{
+    flex: 0 0 70px;
+    font-size: 16px;
+    text-align: left;
+}
+
+.modalinput{
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border: .5px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.errortext{
+    margin: 0 30px 8px;
+    color: red;
+    font-size: 13px;
+    text-align: left;
+}
+
+.buttondiv{
+    background-color: #6d6dff;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 20px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.addbutton, .closebutton{
+    padding: 5px 10px;
+   border-radius: 10px;
+    width: 100px;
+    gap: 30px;
+    font-size: 18px;
+    color:white;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+
+.addbutton{
+    background-color: #95bb72;
+}
+.closebutton{
+    background-color: #de0a26;
+}
+.addbutton:hover,
+.closebutton:hover{
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.addbutton:active,
+.closebutton:active{
+    transform: translateY(1px) scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

@@ -1,0 +1,121 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.card{
+    width: 420px;
+    max-width: 90vw;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.modalheader{
+    background-color: #5C5CFF;
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    font-size: 24px;
+    white-space: nowrap;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    align-items: center;
+    color: #fff;
+}
+
+.inputfield{
+    background-color: aliceblue;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 12px;
+}
+
+.section{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 20px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.modallabel{
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.modalinput{
+    padding: 8px 14px;
+    border: 0.5px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    flex: 1;
+    max-width: 200px;
+    margin-left: 20px;
+}
+
+.buttondiv{
+    background-color: #6d6dff;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 20px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.addbutton, .closebutton{
+    padding: 8px 10px;
+    border: none;
+    border-radius: 10px;
+    width: 100px;
+    font-size: 16px;
+    color: white;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+
+.addbutton{
+    background-color: #95bb72;
+}
+
+.closebutton{
+    background-color: #de0a26;
+}
+
+.addbutton:hover,
+.closebutton:hover{
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.addbutton:active,
+.closebutton:active{
+    transform: translateY(1px) scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.fielderror{
+    color: #de0a26;
+    font-size: 12px;
+    margin: -6px 0 4px 200px;
+    text-align: left;
+}
