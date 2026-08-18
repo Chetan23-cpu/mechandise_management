@@ -2,6 +2,8 @@ import db from "@/lib/db";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/logActivity";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB, measured on the original file (pre base64)
+
 export async function PUT(request, { params }) {
   try {
     const { id } = await params;
@@ -14,7 +16,7 @@ export async function PUT(request, { params }) {
     }
 
     const body = await request.json();
-    const { itemCode, name, shelfLocation, reason, email } = body;
+    const { itemCode, name, shelfLocation, reason, email, image } = body;
 
     if (!itemCode || itemCode.trim() === "") {
       return NextResponse.json(
@@ -47,13 +49,36 @@ export async function PUT(request, { params }) {
       itemCode: itemCode.trim(),
       name: name.trim(),
       shelf_location: shelfLocation.trim(),
-      
     };
+
+    // image handling:
+    // - key absent from body  -> leave existing image untouched
+    // - image === ""          -> clear the image
+    // - image is a data URL   -> validate size and store it
+    let imageChanged = false;
+    if (Object.prototype.hasOwnProperty.call(body, "image")) {
+      if (!image || image.trim() === "") {
+        updatePayload.image = null;
+        imageChanged = existingAsset.image !== null;
+      } else {
+        const base64Part = image.includes(",") ? image.split(",")[1] : image;
+        const approxBytes = Math.ceil((base64Part.length * 3) / 4);
+
+        if (approxBytes > MAX_IMAGE_BYTES) {
+          return NextResponse.json(
+            { error: "Image must be smaller than 200KB" },
+            { status: 400 },
+          );
+        }
+
+        updatePayload.image = image;
+        imageChanged = existingAsset.image !== image;
+      }
+    }
 
     await db("reusables").where({ id }).update(updatePayload);
 
     const updatedAsset = await db("reusables").where({ id }).first();
-
 
     const locationRow = await db("locations")
       .where({ id: existingAsset.location })
@@ -67,6 +92,9 @@ export async function PUT(request, { params }) {
     }
     if (existingAsset.name !== updatePayload.name) {
       changes.push(`name: ${existingAsset.name} → ${updatePayload.name}`);
+    }
+    if (imageChanged) {
+      changes.push(`image: ${updatedAsset.image ? "updated" : "removed"}`);
     }
     changes.push(
       `shelf: ${existingAsset.shelf_location} → ${updatePayload.shelf_location}`,

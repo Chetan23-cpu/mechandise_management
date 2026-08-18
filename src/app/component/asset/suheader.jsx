@@ -19,10 +19,6 @@ const AssetSubheader = () => {
                         <div className={styles.icon} onClick={() => router.push("/location")}><IoArrowBackCircle /></div>
                         <div>{locationName} - Operational View</div> 
                         </div>
-                    <div className={styles.change}>
-                        <div className={styles.edit}><MdModeEditOutline /></div>
-                        <div className={styles.delete}><MdDelete /></div>
-                    </div>
                 </div>
             </div> 
         </div>

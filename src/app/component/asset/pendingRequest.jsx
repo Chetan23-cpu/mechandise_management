@@ -114,10 +114,11 @@ const PendingRequest = ({ locationId }) => {
 
             autoTable(doc, {
                 startY: searchTerm.trim() ? 28 : 22,
-                head: [["Request Id", "Requested By", "Date", "Type", "Item", "Quantity", "Status"]],
+                head: [["Request Id", "Requested By","Requested To", "Date", "Type", "Item", "Quantity", "Status"]],
                 body: allRows.map((row) => [
                     row.requestNo,
                     row.email,
+                    row.requested_to,
                     new Date(row.date).toLocaleDateString(),
                     row.type,
                     row.itemName,
@@ -178,6 +179,7 @@ const PendingRequest = ({ locationId }) => {
                     <tr className={styles.tableheading}>
                         <th className={styles.head}>Request Id</th>
                         <th className={styles.head}>Requested By</th>
+                        <th className={styles.head}>Requested To </th>
                         <th className={styles.head}>Date</th>
                         <th className={styles.head}>Type</th>
                         <th className={styles.head}>Item</th>
@@ -200,6 +202,7 @@ const PendingRequest = ({ locationId }) => {
                             <tr key={row.itemId} className={styles.tablebody}>
                                 <td>{row.requestNo}</td>
                                 <td>{row.email}</td>
+                                <td>{row.requested_to}</td>
                                 <td>{new Date(row.date).toLocaleDateString()}</td>
                                 <td>{row.type}</td>
                                 <td>{row.itemName}</td>

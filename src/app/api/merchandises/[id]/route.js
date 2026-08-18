@@ -2,6 +2,8 @@ import db from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { logActivity } from "@/lib/logActivity";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB, measured on the original file (pre base64)
+
 export async function PUT(request, { params }) {
     try {
         const { id } = await params;
@@ -11,7 +13,7 @@ export async function PUT(request, { params }) {
         }
 
         const body = await request.json();
-        const { itemCode, name, shelfLocation, quantity, reason, email } = body;
+        const { itemCode, name, shelfLocation, quantity, reason, email, image } = body;
 
         if (!itemCode || itemCode.trim() === "") {
             return NextResponse.json({ error: "Item Code is required" }, { status: 400 });
@@ -46,6 +48,31 @@ export async function PUT(request, { params }) {
             quantity: parsedQuantity,
         };
 
+        // image handling:
+        // - key absent from body  -> leave existing image untouched
+        // - image === ""          -> clear the image
+        // - image is a data URL   -> validate size and store it
+        let imageChanged = false;
+        if (Object.prototype.hasOwnProperty.call(body, "image")) {
+            if (!image || image.trim() === "") {
+                updatePayload.image = null;
+                imageChanged = existingProduct.image !== null;
+            } else {
+                const base64Part = image.includes(",") ? image.split(",")[1] : image;
+                const approxBytes = Math.ceil((base64Part.length * 3) / 4);
+
+                if (approxBytes > MAX_IMAGE_BYTES) {
+                    return NextResponse.json(
+                        { error: "Image must be smaller than 200KB" },
+                        { status: 400 }
+                    );
+                }
+
+                updatePayload.image = image;
+                imageChanged = existingProduct.image !== image;
+            }
+        }
+
         await db("merchandises").where({ id }).update(updatePayload);
 
         const updatedMerchandise = await db("merchandises").where({ id }).first();
@@ -68,6 +95,9 @@ export async function PUT(request, { params }) {
         }
         if (existingProduct.quantity !== updatedMerchandise.quantity) {
             changes.push(`qty: ${existingProduct.quantity} → ${updatedMerchandise.quantity}`);
+        }
+        if (imageChanged) {
+            changes.push(`image: ${updatedMerchandise.image ? "updated" : "removed"}`);
         }
         // always show shelf location, changed or not
         changes.push(`shelf: ${existingProduct.shelf_location} → ${updatedMerchandise.shelf_location}`);

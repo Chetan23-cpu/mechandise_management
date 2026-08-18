@@ -2,6 +2,8 @@ import db from "@/lib/db";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/logActivity";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB, measured on the original file (pre base64)
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -59,7 +61,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { itemCode, name, selfLocation, status, location, email } = body;
+    const { itemCode, name, selfLocation, status, location, email, image } = body;
 
     if (!itemCode || itemCode.trim() === "") {
       return NextResponse.json(
@@ -92,12 +94,29 @@ export async function POST(request) {
       );
     }
 
+    // image is an optional base64 data URL, e.g. "data:image/png;base64,...."
+    let imageToStore = null;
+    if (image && typeof image === "string" && image.trim() !== "") {
+      const base64Part = image.includes(",") ? image.split(",")[1] : image;
+      const approxBytes = Math.ceil((base64Part.length * 3) / 4);
+
+      if (approxBytes > MAX_IMAGE_BYTES) {
+        return NextResponse.json(
+          { error: "Image must be smaller than 200KB" },
+          { status: 400 },
+        );
+      }
+
+      imageToStore = image;
+    }
+
     const [id] = await db("reusables").insert({
       itemCode: itemCode.trim(),
       name: name.trim(),
       shelf_location: selfLocation.trim(),
       status: status.toString().trim(),
       location: location.toString(),
+      image: imageToStore,
     });
 
     const newReusable = await db("reusables").where({ id }).first();

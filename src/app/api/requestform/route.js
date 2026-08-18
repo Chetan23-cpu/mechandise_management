@@ -7,6 +7,16 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const locationId = searchParams.get("locationId");
         const type = searchParams.get("type");
+        const wantUsers = searchParams.get("users");
+
+        // "Request to" lookup: users whose location JSON array contains this locationId
+        if (locationId && wantUsers === "true") {
+            const users = await db("users")
+                .select("id", "email")
+                .whereRaw("JSON_CONTAINS(location, ?)", [JSON.stringify(Number(locationId))])
+                .orderBy("email");
+            return NextResponse.json(users);
+        }
 
         // Product lookup: location + type both provided
         if (locationId && type) {
@@ -44,7 +54,7 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { name, email, locationId, reason, items } = body;
+        const { name, email, locationId, requestedTo, reason, items } = body;
 
         if (!name || name.trim() === "") {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -54,6 +64,9 @@ export async function POST(request) {
         }
         if (!locationId) {
             return NextResponse.json({ error: "Location is required" }, { status: 400 });
+        }
+        if (!requestedTo || requestedTo.trim() === "") {
+            return NextResponse.json({ error: "Request to is required" }, { status: 400 });
         }
         if (!reason || reason.trim() === "") {
             return NextResponse.json({ error: "Reason is required" }, { status: 400 });
@@ -79,6 +92,7 @@ export async function POST(request) {
                 name: name.trim(),
                 email: email.trim(),
                 location: locationId,
+                requested_to: requestedTo.trim(),
                 reason: reason.trim(),
             });
 
@@ -104,7 +118,7 @@ export async function POST(request) {
         await logActivity({
             email: email.trim(),
             action: "Request Submitted",
-            comment: `Request ${savedRequest.request_no} submitted with ${savedItems.length} item(s), location: ${locationName}. Reason: ${reason.trim()}`,
+            comment: `Request ${savedRequest.request_no} submitted with ${savedItems.length} item(s), location: ${locationName}, requested to: ${requestedTo.trim()}. Reason: ${reason.trim()}`,
             locationId: locationId,
         });
 

@@ -2,11 +2,15 @@
 import styles from "./css/productModal.module.css";
 import { useState, useEffect } from "react";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB
+
 const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName }) => {
   const [itemCode, setItemCode] = useState("");
   const [name, setName] = useState("");
   const [selfLocation, setSelfLocation] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [image, setImage] = useState(""); // base64 data URL
+  const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [currentEmail, setCurrentEmail] = useState("");
@@ -30,6 +34,48 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrors((prev) => ({ ...prev, image: "Please select an image file" }));
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrors((prev) => ({
+        ...prev,
+        image: `Image must be smaller than 200KB (selected file is ${Math.round(
+          file.size / 1024
+        )}KB)`,
+      }));
+      e.target.value = "";
+      setImage("");
+      setImagePreview("");
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, image: "" }));
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImage(reader.result);
+      setImagePreview(reader.result);
+    };
+    reader.onerror = () => {
+      setErrors((prev) => ({ ...prev, image: "Failed to read image file" }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImage("");
+    setImagePreview("");
+    setErrors((prev) => ({ ...prev, image: "" }));
+  };
+
   const handleAdd = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
@@ -46,6 +92,7 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
           quantity,
           location: locationId,
           email: currentEmail,
+          image, // base64 data URL, or "" if none selected
         }),
       });
 
@@ -114,6 +161,37 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
               />
             </div>
             {errors.quantity && <p className={styles.fielderror}>{errors.quantity}</p>}
+
+            <div className={styles.section}>
+              <label>Product Image (max 200KB)</label>
+              <input
+                type="file"
+                accept="image/*"
+                className={styles.modalinput}
+                onChange={handleImageChange}
+              />
+            </div>
+            {imagePreview && (
+              <div className={styles.section}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    maxWidth: "120px",
+                    maxHeight: "120px",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+                <p
+                  onClick={handleRemoveImage}
+                  style={{ cursor: "pointer", color: "#c00", fontSize: "12px", marginTop: "4px" }}
+                >
+                  Remove image
+                </p>
+              </div>
+            )}
+            {errors.image && <p className={styles.fielderror}>{errors.image}</p>}
 
             <div className={styles.section}>
               <label>Location</label>

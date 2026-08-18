@@ -19,6 +19,10 @@ const RequestForm = () => {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [requestedTo, setRequestedTo] = useState("");
+
   const [rows, setRows] = useState([emptyRow()]);
 
   const [name, setName] = useState("");
@@ -46,11 +50,41 @@ const RequestForm = () => {
     fetchLocations();
   }, []);
 
-  // location changed — type and product selections are stale, reset everything downstream
+  // location changed — type, product, and "request to" selections are stale, reset everything downstream
   useEffect(() => {
     setProductType("");
     setProducts([]);
     setRows([emptyRow()]);
+    setUsers([]);
+    setRequestedTo("");
+  }, [locationId]);
+
+  // location changed — fetch users at that location for the "Request to" dropdown
+  useEffect(() => {
+    if (!locationId) {
+      setUsers([]);
+      setRequestedTo("");
+      return;
+    }
+
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+      setRequestedTo("");
+      try {
+        const res = await fetch(
+          `/api/requestform?locationId=${locationId}&users=true`,
+        );
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+        setUsers([]);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
   }, [locationId]);
 
   // type changed — fetch the product list once, shared across all rows
@@ -116,14 +150,22 @@ const RequestForm = () => {
     setLocationId("");
     setProductType("");
     setProducts([]);
+    setUsers([]);
+    setRequestedTo("");
     setRows([emptyRow()]);
     setReason("");
     setError("");
   };
 
   const handleSubmit = async () => {
-    if (!name.trim() || !email.trim() || !locationId || !reason.trim()) {
-      setError("Name, email, location and reason are required");
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !locationId ||
+      !requestedTo ||
+      !reason.trim()
+    ) {
+      setError("Name, email, location, request to, and reason are required");
       return;
     }
     if (!productType) {
@@ -153,6 +195,7 @@ const RequestForm = () => {
           name: name.trim(),
           email: email.trim(),
           locationId,
+          requestedTo,
           reason: reason.trim(),
           items: rows.map((row) => ({
             type: productType,
@@ -224,6 +267,24 @@ const RequestForm = () => {
               ))}
             </select>
           </div>
+          <div className={styles.section}>
+            <label>Request to</label>
+            <select
+              value={requestedTo}
+              onChange={(e) => setRequestedTo(e.target.value)}
+              className={styles.input}
+              disabled={!locationId || loadingUsers}
+            >
+              <option value="">
+                {loadingUsers ? "Loading users..." : "Select"}
+              </option>
+              {users.map((u) => (
+                <option key={u.id} value={u.email}>
+                  {u.email}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className={styles.section}>
             <label>Merchandise/Reusable</label>
@@ -242,48 +303,61 @@ const RequestForm = () => {
           <div className={styles.productSection}>
             <label>Product</label>
             <div className={styles.productRows}>
-              {rows.map((row, index) => (
-                <div className={styles.productInputs} key={index}>
-                  <select
-                    value={row.productId}
-                    onChange={(e) => handleProductChange(index, e.target.value)}
-                    className={styles.input_p}
-                    disabled={!productType || loadingProducts}
-                  >
-                    <option value="">
-                      {loadingProducts ? "Loading products..." : "Select"}
-                    </option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    min="1"
-                    value={row.quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(index, e.target.value)
-                    }
-                    className={styles.input_q}
-                    placeholder="Qty"
-                    disabled={productType === "reusable"}
-                  ></input>
+              {rows.map((row, index) => {
+                const isLastRow = index === rows.length - 1;
 
-                  {index === rows.length - 1 ? (
-                    <div className={styles.plus} onClick={handleAddRow}>
+                const rowInputs = (
+                  <div className={styles.productInputs}>
+                    <select
+                      value={row.productId}
+                      onChange={(e) =>
+                        handleProductChange(index, e.target.value)
+                      }
+                      className={styles.input_p}
+                      disabled={!productType || loadingProducts}
+                    >
+                      <option value="">
+                        {loadingProducts ? "Loading products..." : "Select"}
+                      </option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      min="1"
+                      value={row.quantity}
+                      onChange={(e) =>
+                        handleQuantityChange(index, e.target.value)
+                      }
+                      className={styles.input_q}
+                      placeholder="Qty"
+                      disabled={productType === "reusable"}
+                    ></input>
+
+                    {rows.length > 1 && (
+                      <div
+                        className={styles.plus}
+                        onClick={() => handleRemoveRow(index)}
+                      >
+                        <IoIosRemoveCircle />
+                      </div>
+                    )}
+                  </div>
+                );
+
+                return isLastRow ? (
+                  <div className={styles.productRowWrapper} key={index}>
+                    {rowInputs}
+                    <div className={styles.plusBelow} onClick={handleAddRow}>
                       <IoIosAddCircle />
                     </div>
-                  ) : (
-                    <div
-                      className={styles.plus}
-                      onClick={() => handleRemoveRow(index)}
-                    >
-                      <IoIosRemoveCircle />
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ) : (
+                  <div key={index}>{rowInputs}</div>
+                );
+              })}
             </div>
           </div>
 

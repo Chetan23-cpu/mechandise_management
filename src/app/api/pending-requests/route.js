@@ -30,6 +30,7 @@ export async function GET(request) {
                     builder
                         .whereRaw("LOWER(r.request_no) LIKE ?", [term])
                         .orWhereRaw("LOWER(r.email) LIKE ?", [term])
+                        .orWhereRaw("LOWER(r.requested_to) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.type) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.status) LIKE ?", [term])
                         .orWhereRaw("LOWER(COALESCE(m.name, re.name)) LIKE ?", [term]);
@@ -51,6 +52,7 @@ export async function GET(request) {
                 "ri.status",
                 "r.request_no",
                 "r.email",
+                "r.requested_to",
                 "r.created_at as date",
                 db.raw("COALESCE(m.name, re.name) as item_name")
             )
@@ -62,6 +64,7 @@ export async function GET(request) {
             itemId: i.item_id,
             requestNo: i.request_no,
             email: i.email,
+            requested_to: i.requested_to,
             date: i.date,
             type: i.type,
             itemName: i.item_name || "Unknown",

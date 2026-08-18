@@ -2,6 +2,8 @@
 import styles from "./css/reuseModal.module.css";
 import { useState, useEffect } from "react";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB
+
 const ReuseProductAddModal = ({
   onClose,
   onReusableAdded,
@@ -12,6 +14,8 @@ const ReuseProductAddModal = ({
   const [name, setName] = useState("");
   const [selfLocation, setSelfLocation] = useState("");
   const [status, setStatus] = useState("");
+  const [image, setImage] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [currentEmail, setCurrentEmail] = useState("");
@@ -37,6 +41,48 @@ const ReuseProductAddModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrors((prev) => ({ ...prev, image: "Please select an image file" }));
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrors((prev) => ({
+        ...prev,
+        image: `Image must be smaller than 200KB (selected file is ${Math.round(
+          file.size / 1024
+        )}KB)`,
+      }));
+      e.target.value = "";
+      setImage("");
+      setImagePreview("");
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, image: "" }));
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImage(reader.result);
+      setImagePreview(reader.result);
+    };
+    reader.onerror = () => {
+      setErrors((prev) => ({ ...prev, image: "Failed to read image file" }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImage("");
+    setImagePreview("");
+    setErrors((prev) => ({ ...prev, image: "" }));
+  };
+
   const handleAdd = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
@@ -53,6 +99,7 @@ const ReuseProductAddModal = ({
           location: locationId,
           status,
           email: currentEmail,
+          image,
         }),
       });
 
@@ -145,6 +192,42 @@ const ReuseProductAddModal = ({
             {errors.status && (
               <p className={styles.fielderror}>{errors.status}</p>
             )}
+
+            <div className={styles.section}>
+              <label>Product Image (max 200KB)</label>
+              <input
+                type="file"
+                accept="image/*"
+                className={styles.modalinput}
+                onChange={handleImageChange}
+              />
+            </div>
+            {imagePreview && (
+              <div className={styles.section}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    maxWidth: "120px",
+                    maxHeight: "120px",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+                <p
+                  onClick={handleRemoveImage}
+                  style={{
+                    cursor: "pointer",
+                    color: "#c00",
+                    fontSize: "12px",
+                    marginTop: "4px",
+                  }}
+                >
+                  Remove image
+                </p>
+              </div>
+            )}
+            {errors.image && <p className={styles.fielderror}>{errors.image}</p>}
 
             {errors.form && <p className={styles.fielderror}>{errors.form}</p>}
           </div>

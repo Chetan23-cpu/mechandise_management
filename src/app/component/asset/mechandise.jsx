@@ -201,6 +201,7 @@ const Merchandise = ({ locationId, locationName }) => {
         <thead>
           <tr className={styles.tableheading}>
             <th className={styles.head}>S.No</th>
+            <th className={styles.head}>Image</th>
             <th className={styles.head}>Item Code</th>
             <th className={styles.head}>Item</th>
             <th className={styles.head}>Shelf Location</th>
@@ -211,16 +212,29 @@ const Merchandise = ({ locationId, locationName }) => {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="6">Loading...</td>
+              <td colSpan="7">Loading...</td>
             </tr>
           ) : stockData.length === 0 ? (
             <tr>
-              <td colSpan="6">No items found for this location.</td>
+              <td colSpan="7">No items found for this location.</td>
             </tr>
           ) : (
             stockData.map((row, index) => (
               <tr key={row.id} className={styles.tablebody}>
                 <td>{(currentPage - 1) * limit + index + 1}</td>
+                <td>
+                  {row.image ? (
+                    <div className={styles.thumbWrapper}>
+                      <img
+                        src={row.image}
+                        alt={row.name}
+                        className={styles.thumb}
+                      />
+                    </div>
+                  ) : (
+                    <span className={styles.noImage}>—</span>
+                  )}
+                </td>
                 <td>{row.item_code}</td>
                 <td>{row.name}</td>
                 <td>{row.shelf_location}</td>

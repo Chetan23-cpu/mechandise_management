@@ -2,6 +2,8 @@
 import styles from "./css/productModal.module.css";
 import { useState, useEffect } from "react";
 
+const MAX_IMAGE_BYTES = 200 * 1024; // 200KB
+
 const EditProductModal = ({ onClose, onUpdate, product }) => {
   const [itemCode, setItemCode] = useState(product?.item_code || "");
   const [name, setName] = useState(product?.name || "");
@@ -14,8 +16,12 @@ const EditProductModal = ({ onClose, onUpdate, product }) => {
       : ""
   );
   const [reason, setReason] = useState("");
+  const [image, setImage] = useState(product?.image || ""); // base64 data URL or existing value
+  const [imagePreview, setImagePreview] = useState(product?.image || "");
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState("");
   const [currentEmail, setCurrentEmail] = useState("");
 
   useEffect(() => {
@@ -25,9 +31,54 @@ const EditProductModal = ({ onClose, onUpdate, product }) => {
       .catch((err) => console.error("Failed to fetch current user", err));
   }, []);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("Please select an image file");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(
+        `Image must be smaller than 200KB (selected file is ${Math.round(
+          file.size / 1024
+        )}KB)`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setImageError("");
+    setImageRemoved(false);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImage(reader.result);
+      setImagePreview(reader.result);
+    };
+    reader.onerror = () => {
+      setImageError("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImage("");
+    setImagePreview("");
+    setImageError("");
+    setImageRemoved(true);
+  };
+
   const handleUpdate = async () => {
     if (!itemCode.trim() || !name.trim() || !shelfLocation.trim() || !quantity.toString().trim() || !reason.trim()) {
       setError("itemCode, name, shelflocation, quantity and reason are required");
+      return;
+    }
+    if (imageError) {
+      setError("Please fix the image error before saving");
       return;
     }
 
@@ -38,6 +89,10 @@ const EditProductModal = ({ onClose, onUpdate, product }) => {
       quantity: quantity.toString().trim(),
       reason: reason.trim(),
       email: currentEmail,
+      // if a new image was picked, send it; if removed, send "" to clear it;
+      // otherwise omit so the backend can leave the existing image untouched
+      ...(image !== (product?.image || "") ? { image } : {}),
+      ...(imageRemoved ? { image: "" } : {}),
     };
 
     try {
@@ -107,6 +162,38 @@ const EditProductModal = ({ onClose, onUpdate, product }) => {
                 className={styles.modalinput}
               ></input>
             </div>
+
+            <div className={styles.section}>
+              <label>Product Image (max 200KB)</label>
+              <input
+                type="file"
+                accept="image/*"
+                className={styles.modalinput}
+                onChange={handleImageChange}
+              />
+            </div>
+            {imagePreview && (
+              <div className={styles.section}>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    maxWidth: "120px",
+                    maxHeight: "120px",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+                <p
+                  onClick={handleRemoveImage}
+                  style={{ cursor: "pointer", color: "#c00", fontSize: "12px", marginTop: "4px" }}
+                >
+                  Remove image
+                </p>
+              </div>
+            )}
+            {imageError && <p className={styles.fielderror}>{imageError}</p>}
+
             <div className={styles.section}>
               <label>Reason</label>
               <input

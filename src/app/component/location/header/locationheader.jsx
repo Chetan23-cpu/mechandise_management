@@ -1,12 +1,11 @@
 "use client";
-import styles from "./css/asset.module.css";
-
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import styles from "./locationheader.module.css";
 import { FaUser } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 
-const AssetHeader = ({ activeTab, onTabChange }) => {
+const LocationHeader = ({ activeTab, onTabChange }) => {
   const router = useRouter();
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -60,10 +59,16 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
       <div className={styles.head}>Merchandise and Asset Management System</div>
       <div className={styles.section}>
         <div
-          className={styles.button2}
-          onClick={() => router.push("/location")}
+          className={`${styles.button2} ${activeTab === "location" ? styles.active : ""}`}
+          onClick={goToLocationTab}
         >
           Locations
+        </div>
+        <div
+          className={`${styles.button2} ${activeTab === "users" ? styles.active : ""}`}
+          onClick={goToUsersTab}
+        >
+          Users
         </div>
         <div
           className={styles.button2}
@@ -98,6 +103,4 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
   );
 };
 
-export default AssetHeader;
-
-  
+export default LocationHeader;
