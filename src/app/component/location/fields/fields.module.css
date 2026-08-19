@@ -1,9 +1,7 @@
 .main {
-    flex: 1;
-    min-height: 0;
+    min-height: 80vh;
     width: 100%;
     background: #fff;
-    overflow-y: auto;
     overflow-x: hidden;
     color: black;
 }
