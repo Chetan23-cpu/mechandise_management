@@ -1,12 +1,20 @@
 "use client";
 import styles from "./locationEditModal.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const LocationEditModal = ({ onClose, onUpdate, location }) => {
   const [name, setName] = useState(location?.name || "");
-  const [remarks, setRemarks] = useState(location?.remarks || "");
+  const [remarks, setRemarks] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [currentEmail, setCurrentEmail] = useState("");
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => setCurrentEmail(data.user?.email || ""))
+      .catch((err) => console.error("Failed to fetch current user", err));
+  }, []);
 
   const handleUpdate = async () => {
     if (!name.trim()) {
@@ -23,6 +31,8 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          remarks: remarks.trim(),
+          email: currentEmail,
         }),
       });
 
@@ -61,13 +71,13 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
             </div>
 
             <div className={styles.section}>
-              <label>Remarks</label>
+              <label>Reason for change</label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 className={styles.modaltextarea}
                 rows={3}
-                placeholder="Any notes about this location..."
+                placeholder="Why are you updating this location..."
               />
             </div>
           </div>

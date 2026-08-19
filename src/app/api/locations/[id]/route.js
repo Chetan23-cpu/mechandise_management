@@ -11,7 +11,7 @@ export async function PUT(request, { params }) {
         }
 
         const body = await request.json();
-        const { name, email } = body;
+        const { name, email, remarks } = body;
 
         if (!name || name.trim() === "") {
             return NextResponse.json({ error: "Location name is required" }, { status: 400 });
@@ -35,11 +35,12 @@ export async function PUT(request, { params }) {
             changes.push(`name: ${existingLocation.name} → ${updatedLocation.name}`);
         }
         const changesText = changes.length > 0 ? ` — ${changes.join(", ")}` : "";
+        const reasonText = remarks && remarks.trim() ? ` (reason: ${remarks.trim()})` : "";
 
         await logActivity({
             email: email || "unknown",
             action: "Location Updated",
-            comment: `Updated location "${existingLocation.name}"${changesText}`,
+            comment: `Updated location "${existingLocation.name}"${changesText}${reasonText}`,
             locationId: updatedLocation.id,
         });
 

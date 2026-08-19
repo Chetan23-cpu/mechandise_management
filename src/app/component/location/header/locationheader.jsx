@@ -35,9 +35,6 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
     }
   };
 
-  // On the locations page itself, these buttons switch a local tab.
-  // On any other page (e.g. the asset page), there's no local tab to
-  // switch, so fall back to navigating to the locations page instead.
   const goToLocationTab = () => {
     if (onTabChange) {
       onTabChange("location");
@@ -51,6 +48,14 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
       onTabChange("users");
     } else {
       router.push("/?tab=users");
+    }
+  };
+
+  const goToActivityLogTab = () => {
+    if (onTabChange) {
+      onTabChange("activitylog");
+    } else {
+      router.push("/?tab=activitylog");
     }
   };
 
@@ -69,6 +74,14 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
           onClick={goToUsersTab}
         >
           Users
+        </div>
+        <div
+          className={`${styles.button2} ${
+            activeTab === "activitylog" ? styles.active : ""
+          }`}
+          onClick={goToActivityLogTab}
+        >
+          Activity Log
         </div>
         <div
           className={styles.button2}

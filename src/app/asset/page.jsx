@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 const Asset = () => {
     return (
-        <div style={{ backgroundColor: "#faebd7" }}>
+        <div style={{ backgroundColor: "#fff" }}>
             <Assetheader />
             <Suspense fallback={<div>Loading...</div>}>
                 <AssetSubheader />

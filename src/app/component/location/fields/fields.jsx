@@ -13,7 +13,7 @@ import LocationHeader from "../header/locationheader";
 import LocationEditModal from "./locationeditModal";
 
 const Locationfields = () => {
-  const [activeTab, setActiveTab] = useState("location"); // "location" | "users"
+  const [activeTab, setActiveTab] = useState("location");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -26,10 +26,26 @@ const Locationfields = () => {
 
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [loadingActivityLogs, setLoadingActivityLogs] = useState(false);
+  const [activitySearchTerm, setActivitySearchTerm] = useState("");
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityTotalPages, setActivityTotalPages] = useState(1);
   const [isAddUserModal, setAddUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditUserModal, setEditUserModal] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [currentEmail, setCurrentEmail] = useState("");
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => setCurrentEmail(data.user?.email || ""))
+      .catch((err) => console.error("Failed to fetch current user", err));
+  }, []);
 
   const fetchLocations = async () => {
     try {
@@ -76,7 +92,9 @@ const Locationfields = () => {
 
   const handleLocationUpdated = (updatedLocation) => {
     setLocations((prev) =>
-      prev.map((loc) => (loc.id === updatedLocation.id ? updatedLocation : loc)),
+      prev.map((loc) =>
+        loc.id === updatedLocation.id ? updatedLocation : loc,
+      ),
     );
   };
 
@@ -90,7 +108,10 @@ const Locationfields = () => {
 
     try {
       setDeletingLocationId(id);
-      const res = await fetch(`/api/locations/${id}`, { method: "DELETE" });
+      const res = await fetch(
+        `/api/locations/${id}?email=${encodeURIComponent(currentEmail || "")}`,
+        { method: "DELETE" },
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -147,6 +168,73 @@ const Locationfields = () => {
       setDeletingId(null);
     }
   };
+  useEffect(() => {
+    if (activeTab !== "activitylog") return;
+
+    const timer = setTimeout(() => {
+      fetchActivityLogs(1, activitySearchTerm);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [activitySearchTerm, activeTab]);
+
+  // NEW: filter users by name, email, location access, or admin status
+  const filteredUsers = users.filter((u) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+
+    const locationText = getLocationNames(u.location).toLowerCase();
+
+    const isAdminTrue =
+      u.isAdmin === true ||
+      u.isAdmin === "true" ||
+      u.isAdmin === "Yes" ||
+      u.isAdmin === "yes";
+    const adminText = isAdminTrue ? "yes" : "no";
+
+    return (
+      u.name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) ||
+      locationText.includes(term) ||
+      adminText.includes(term)
+    );
+  });
+
+  const handleActivitySearch = (value) => {
+    setActivitySearchTerm(value);
+  };
+
+  const fetchActivityLogs = async (page = 1, searchValue = "") => {
+    setLoadingActivityLogs(true);
+
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+      });
+
+      if (searchValue.trim()) {
+        params.set("search", searchValue.trim());
+      }
+
+      const res = await fetch(`/api/activity-log?${params}`);
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch activity logs");
+      }
+
+      const result = await res.json();
+
+      setActivityLogs(result.data || []);
+      setActivityPage(result.page || 1);
+      setActivityTotalPages(result.totalPages || 1);
+    } catch (error) {
+      console.error("Failed to fetch activity logs:", error);
+      setActivityLogs([]);
+    } finally {
+      setLoadingActivityLogs(false);
+    }
+  };
 
   return (
     <>
@@ -194,7 +282,10 @@ const Locationfields = () => {
                   </div>
                 ))
               )}
-              <div className={styles.button} onClick={() => setIsModalOpen(true)}>
+              <div
+                className={styles.button}
+                onClick={() => setIsModalOpen(true)}
+              >
                 <TiPlus />
                 Add New
               </div>
@@ -222,7 +313,12 @@ const Locationfields = () => {
 
             <div className={styles.searchsection}>
               <div className={styles.search}>
-                <input placeholder="Search..." className={styles.input} />
+                <input
+                  placeholder="Search..."
+                  className={styles.input}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               <div className={styles.add} onClick={() => setAddUserModal(true)}>
                 <IoBagAdd className={styles.bag} />
@@ -246,12 +342,12 @@ const Locationfields = () => {
                   <tr>
                     <td colSpan="6">Loading...</td>
                   </tr>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="6">No users found.</td>
                   </tr>
                 ) : (
-                  users.map((row, index) => (
+                  filteredUsers.map((row, index) => (
                     <tr key={row.id} className={styles.tablebody}>
                       <td>{index + 1}</td>
                       <td>{row.name}</td>
@@ -298,6 +394,88 @@ const Locationfields = () => {
                 user={selectedUser}
               />
             )}
+          </div>
+        )}
+
+        {activeTab === "activitylog" && (
+          <div className={styles.merchandise}>
+            <div className={styles.detailhead}>Activity Log</div>
+
+            <div className={styles.searchsection}>
+              <div className={styles.search}>
+                <input
+                  placeholder="Search activity..."
+                  className={styles.input}
+                  value={activitySearchTerm}
+                  onChange={(e) => handleActivitySearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr className={styles.tableheading}>
+                    <th className={styles.head}>S.No</th>
+                    <th className={styles.head}>Email</th>
+                    <th className={styles.head}>Action</th>
+                    <th className={styles.head}>Comment</th>
+                    <th className={styles.head}>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loadingActivityLogs ? (
+                    <tr>
+                      <td colSpan="5">Loading...</td>
+                    </tr>
+                  ) : activityLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan="5">No activity logs found.</td>
+                    </tr>
+                  ) : (
+                    activityLogs.map((log, index) => (
+                      <tr key={log.id} className={styles.tablebody}>
+                        <td>{(activityPage - 1) * 10 + index + 1}</td>
+
+                        <td>{log.email || "—"}</td>
+
+                        <td>{log.action || "—"}</td>
+
+                        <td>{log.comment || "—"}</td>
+
+                        <td>
+                          {log.date ? new Date(log.date).toLocaleString() : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className={styles.pagination}>
+              <button
+                disabled={activityPage <= 1}
+                onClick={() =>
+                  fetchActivityLogs(activityPage - 1, activitySearchTerm)
+                }
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {activityPage} of {activityTotalPages}
+              </span>
+
+              <button
+                disabled={activityPage >= activityTotalPages}
+                onClick={() =>
+                  fetchActivityLogs(activityPage + 1, activitySearchTerm)
+                }
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>
