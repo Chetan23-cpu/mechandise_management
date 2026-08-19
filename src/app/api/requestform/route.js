@@ -1,6 +1,7 @@
 import db from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { logActivity } from "@/lib/logActivity";
+import { sendMail } from "@/lib/sendMail";
 
 export async function GET(request) {
     try {
@@ -120,6 +121,49 @@ export async function POST(request) {
             action: "Request Submitted",
             comment: `Request ${savedRequest.request_no} submitted with ${savedItems.length} item(s), location: ${locationName}, requested to: ${requestedTo.trim()}. Reason: ${reason.trim()}`,
             locationId: locationId,
+        });
+
+        // Fetch item names for the email body (savedItems only has product_id)
+        const itemDetails = await Promise.all(
+            savedItems.map(async (item) => {
+                const table = item.type === "merchandise" ? "merchandises" : "reusables";
+                const product = await db(table).where({ id: item.product_id }).first();
+                return `${product?.name || "Unknown item"} × ${item.quantity}`;
+            })
+        );
+        const itemsListHtml = itemDetails.map((line) => `<li>${line}</li>`).join("");
+
+        // Confirmation email to the requester — failures here never block the response
+        await sendMail({
+            to: email.trim(),
+            subject: `Request ${savedRequest.request_no} submitted`,
+            html: `
+                <p>Hi ${name.trim()},</p>
+                <p>Your merchandise request has been submitted successfully.</p>
+                <p><strong>Request ID:</strong> ${savedRequest.request_no}</p>
+                <p><strong>Location:</strong> ${locationName}</p>
+                <p><strong>Requested to:</strong> ${requestedTo.trim()}</p>
+                <p><strong>Reason:</strong> ${reason.trim()}</p>
+                <p><strong>Items:</strong></p>
+                <ul>${itemsListHtml}</ul>
+                <p>You'll be notified once this request is reviewed.</p>
+            `,
+        });
+
+        // Notification email to the person the request was made to
+        await sendMail({
+            to: requestedTo.trim(),
+            subject: `New request awaiting your review — ${savedRequest.request_no}`,
+            html: `
+                <p>Hello,</p>
+                <p>${name.trim()} (${email.trim()}) has submitted a merchandise request that needs your review.</p>
+                <p><strong>Request ID:</strong> ${savedRequest.request_no}</p>
+                <p><strong>Location:</strong> ${locationName}</p>
+                <p><strong>Reason:</strong> ${reason.trim()}</p>
+                <p><strong>Items:</strong></p>
+                <ul>${itemsListHtml}</ul>
+                <p>Please log in to review and approve or decline this request.</p>
+            `,
         });
 
         return NextResponse.json(
