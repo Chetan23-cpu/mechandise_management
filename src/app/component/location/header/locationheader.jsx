@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import styles from "./locationheader.module.css";
 import { FaUser } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
+import Image from "next/image";
 
 // Pass `isAdmin` as a prop if you already know it (e.g. from a session/auth
 // context higher up the tree) to skip the fetch below entirely.
@@ -91,8 +92,17 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
 
   return (
     <div className={styles.main}>
+      <div className={styles.imagesec}>
+        <Image
+                  src="/images/logo.png"
+                  alt="Access Denied"
+                  width={65}
+                  height={65} 
+                  style={{ width: "10%", maxWidth: "65px", height: "auto" }}
+                />
       <div className={styles.head}>Merchandise and Asset Management System</div>
-      <div className={styles.section}>
+      </div>
+      <div className={styles.section}> 
         <div
           className={`${styles.button2} ${activeTab === "location" ? styles.active : ""}`}
           onClick={goToLocationTab}

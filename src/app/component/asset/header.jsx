@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { FaUser } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
+import Image from "next/image";
 
 const AssetHeader = ({ activeTab, onTabChange }) => {
   const router = useRouter();
@@ -57,9 +58,18 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
 
   return (
     <div className={styles.main}>
+      <div className={styles.imagesec}>
+        <Image
+                  src="/images/logo.png"
+                  alt="Access Denied"
+                  width={65}
+                  height={65} 
+                  style={{ width: "10%", maxWidth: "65px", height: "auto" }}
+                />
       <div className={styles.head}>Merchandise and Asset Management System</div>
+      </div>
       <div className={styles.section}>
-        <div
+        <div 
           className={styles.button2}
           onClick={() => router.push("/location")}
         >

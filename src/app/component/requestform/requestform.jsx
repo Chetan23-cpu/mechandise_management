@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { IoIosAddCircle } from "react-icons/io";
 import { IoIosRemoveCircle } from "react-icons/io";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const emptyRow = () => ({
   productId: "",
@@ -229,7 +230,16 @@ const RequestForm = () => {
   return (
     <> 
     <div className={styles.main1}>
+      <div className={styles.imagesec}>
+        <Image
+                  src="/images/logo.png"
+                  alt="Access Denied"
+                  width={65}
+                  height={65} 
+                  style={{ width: "10%", maxWidth: "65px", height: "auto" }}
+                />
       <div className={styles.head1}>Merchandise and Asset Management System</div>
+      </div>
       <div className={styles.section1}>
         <div
           className={styles.button2}
@@ -241,8 +251,8 @@ const RequestForm = () => {
     </div>
       <div className={styles.main}>
         <div className={styles.heading}>
-          <div>Merchandise Request Form</div>
-        </div>
+          <div>Request Form</div>
+        </div> 
         <div className={styles.form}>
           <div className={styles.section}>
             <label>Name</label>

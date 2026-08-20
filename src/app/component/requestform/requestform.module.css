@@ -1,259 +1,589 @@
-.main{
+.main {
     width: 100%;
     background: #fff;
-    height: 120vh;
+    min-height: 120vh;
     color: black;
+    box-sizing: border-box;
 }
-.heading{
+
+/* =========================
+   PAGE HEADING
+========================= */
+
+.heading {
     width: 100%;
     display: flex;
     align-items: center;
-    text-align: center;
     justify-content: center;
     padding-top: 40px;
-    font-size: 40px;
+    padding-left: 16px;
+    padding-right: 16px;
+    font-size: clamp(24px, 4vw, 40px);
     font-weight: 600;
-    letter-spacing: .5px;
-    gap:2px;
+    letter-spacing: 0.5px;
     word-spacing: 3px;
     color: #000075;
-}
-
-.form{
-
-    width: 50%;
-    margin: 30px auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
     text-align: center;
-    box-shadow: 
-        6px 6px 14px rgba(163, 168, 175, 0.55),   
-        -6px -6px 14px rgba(255, 255, 255, 0.85); 
-
-    background-color: #e5e7eb; 
-    border-radius: 10px;
-    padding: 30px;
-    flex-direction: column;
+    box-sizing: border-box;
 }
 
-.section{
+/* =========================
+   FORM CONTAINER
+========================= */
+
+.form {
+    width: min(90%, 700px);
+    margin: 30px auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-align: center;
+
+    box-shadow:
+        6px 6px 14px rgba(163, 168, 175, 0.55),
+        -6px -6px 14px rgba(255, 255, 255, 0.85);
+
+    background-color: #e5e7eb;
+    border-radius: 10px;
+
+    padding: clamp(16px, 3vw, 30px);
+    box-sizing: border-box;
+}
+
+/* =========================
+   NORMAL FORM ROWS
+========================= */
+
+.section {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 30px;
-    font-size: 20px;
+
+    gap: clamp(10px, 3vw, 30px);
+
+    font-size: clamp(14px, 2.2vw, 20px);
     font-weight: 600;
-    padding: 20px 50px;
+
+    padding:
+        clamp(12px, 2.5vw, 20px)
+        clamp(12px, 5vw, 50px);
+
     width: 100%;
     box-sizing: border-box;
 }
 
-.input{
-    border-radius: 10px;
-    text-align: center;
-    background-color: #fff;
-    font-weight: 100;
-    padding: 10px 40px;
-    font-size: 12px;
-    width: 40vh;
-}
-.input_p{
-    border-radius: 10px;
-    text-align: center;
-    background-color: #fff;
-    font-weight: 100;
-    padding: 10px 40px;
-    font-size: 12px;
-    width: 24vh;
-}
-.input_q{
-    border-radius: 10px;
-    text-align: center;
-    background-color: #fff;
-    font-weight: 100;
-    padding: 10px 5px;
-    font-size: 12px;
-    width: 10vh;
-    color: black;
+/* Label */
+
+.section label {
+    flex-shrink: 0;
 }
 
-.request{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+/* =========================
+   NORMAL INPUT
+========================= */
+
+.input {
     width: 100%;
-    padding: 20px 50px;
-    gap: 20px;
-}
+    max-width: 320px;
+    min-width: 0;
 
-.submit, .cancel, .ok{
-   
     border-radius: 10px;
-    padding: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-    transition:
-        transform 0.35s ease,
-        box-shadow 0.35s ease,
-        background-color 0.35s ease;
+    text-align: center;
+
+    background-color: #fff;
+    color: black;
+
+    font-weight: 400;
+    padding: 10px clamp(12px, 3vw, 40px);
+
+    font-size: 12px;
+
+    box-sizing: border-box;
 }
 
-.submit{
-     width: 50vh;
-     background-color: #95bb72;
-}
-
-.cancel{
-    width:20vh;
-    background-color: #de0a26;;
-}
-
-.submit:hover,
-.cancel:hover{
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
-}
-
-.submit:active,
-.cancel:active{
-    transform: translateY(1px) scale(1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.confirmCard {
-  background: #fff;
-  padding: 24px 32px; 
-  border-radius: 8px;
-  text-align: center;
-  min-width: 280px;
-  color: black;
-  gap: 2px;
-}
-
-.ok{
-     width: 25vh;
-     background-color: #95bb72;
-     margin-top: 20px;
-}
-
-.productInputs {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-}
-
-.plus{
-    font-size: 25px;
-    cursor: pointer;
-    transition:
-        transform 0.35s ease,
-        box-shadow 0.35s ease,
-        background-color 0.35s ease;
-}
-.plus:hover{
-    transform: translateY(-2px) scale(1.05);
-}
-
-.plus:active{
-    transform: translateY(1px) scale(1);
-}
+/* =========================
+   PRODUCT SECTION
+========================= */
 
 .productSection {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 30px;
-    font-size: 20px;
+
+    gap: clamp(10px, 3vw, 30px);
+
+    font-size: clamp(14px, 2.2vw, 20px);
     font-weight: 600;
-    padding: 20px 50px;
+
+    padding:
+        clamp(12px, 2.5vw, 20px)
+        clamp(12px, 5vw, 50px);
+
     width: 100%;
     box-sizing: border-box;
 }
 
+/* Product label */
+
+.productSection label {
+    flex-shrink: 0;
+}
+
+/* Container for all product rows */
+
 .productRows {
+    width: 100%;
+    max-width: 320px;
+
     display: flex;
     flex-direction: column;
+
     gap: 8px;
+
+    min-width: 0;
 }
+
+/* Each product row */
+
+.productInputs {
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+/* Product dropdown */
+
+.input_p {
+    flex: 1;
+    min-width: 0;
+
+    border-radius: 10px;
+    text-align: center;
+
+    background-color: #fff;
+    color: black;
+
+    font-weight: 400;
+
+    padding: 10px;
+
+    font-size: 12px;
+
+    box-sizing: border-box;
+}
+
+/* Quantity input */
+
+.input_q {
+    width: 80px;
+    flex: 0 0 80px;
+
+    border-radius: 10px;
+    text-align: center;
+
+    background-color: #fff;
+    color: black;
+
+    font-weight: 400;
+
+    padding: 10px 5px;
+
+    font-size: 12px;
+
+    box-sizing: border-box;
+}
+
+/* Wrapper for the last product row */
 
 .productRowWrapper {
     display: flex;
     flex-direction: column;
+
     align-items: center;
+
     gap: 8px;
+
+    width: 100%;
 }
 
-.plusBelow{
+/* =========================
+   ADD / REMOVE ICONS
+========================= */
+
+.plus {
     font-size: 25px;
     cursor: pointer;
+
+    flex-shrink: 0;
+
     transition:
         transform 0.35s ease,
         box-shadow 0.35s ease,
         background-color 0.35s ease;
 }
-.plusBelow:hover{
+
+.plus:hover {
     transform: translateY(-2px) scale(1.05);
 }
 
-.plusBelow:active{
+.plus:active {
     transform: translateY(1px) scale(1);
-} 
+}
+
+/* Add button below last row */
+
+.plusBelow {
+    font-size: 25px;
+    cursor: pointer;
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+
+.plusBelow:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.plusBelow:active {
+    transform: translateY(1px) scale(1);
+}
+
+/* =========================
+   REQUEST BUTTON SECTION
+========================= */
+
+.request {
+    display: flex;
+    flex-direction: row;
+
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+
+    padding:
+        clamp(12px, 2.5vw, 20px)
+        clamp(12px, 5vw, 50px);
+
+    gap: clamp(10px, 3vw, 20px);
+
+    box-sizing: border-box;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.submit,
+.cancel,
+.ok {
+    border-radius: 10px;
+
+    padding: 10px;
+
+    font-size: clamp(13px, 2vw, 15px);
+    font-weight: 600;
+
+    color: #fff;
+
+    cursor: pointer;
+
+    border: none;
+
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        background-color 0.35s ease;
+}
+
+/* Submit */
+
+.submit {
+    width: 100%;
+    max-width: 400px;
+
+    background-color: #95bb72;
+
+    box-sizing: border-box;
+}
+
+/* Cancel */
+
+.cancel {
+    width: 100%;
+    max-width: 160px;
+
+    background-color: #de0a26;
+
+    box-sizing: border-box;
+}
+
+/* Hover */
+
+.submit:hover,
+.cancel:hover,
+.ok:hover {
+    transform: translateY(-2px) scale(1.05);
+
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+/* Active */
+
+.submit:active,
+.cancel:active,
+.ok:active {
+    transform: translateY(1px) scale(1);
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================
+   CONFIRMATION MODAL
+========================= */
+
+.overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    z-index: 1000;
+
+    padding: 16px;
+
+    box-sizing: border-box;
+}
+
+.confirmCard {
+    background: #fff;
+
+    padding:
+        clamp(18px, 4vw, 24px)
+        clamp(20px, 5vw, 32px);
+
+    border-radius: 8px;
+
+    text-align: center;
+
+    width: 100%;
+    max-width: 280px;
+
+    color: black;
+
+    box-sizing: border-box;
+}
+
+.ok {
+    width: 100%;
+    max-width: 200px;
+
+    background-color: #95bb72;
+
+    margin-top: 20px;
+}
+
+/* =========================
+   HEADER
+========================= */
 
 .main1 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 30px 50px;
-  background: #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  position: sticky;
-  top: 0;
-  z-index: 100; 
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding:
+        clamp(14px, 2.5vw, 30px)
+        clamp(16px, 5vw, 50px);
+
+    background: #e5e7eb;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    box-sizing: border-box;
 }
+
+/* Logo and heading container */
+
+.imagesec {
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+/* Header title */
 
 .head1 {
-  font-size: 25px;
-  font-weight: 600;
-  color: #1f2937;
-  letter-spacing: -0.01em;
+    font-size: clamp(16px, 2.5vw, 25px);
+
+    font-weight: 600;
+
+    color: #1f2937;
+
+    letter-spacing: -0.01em;
 }
+
+/* Header button section */
 
 .section1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
 }
 
+/* Location button */
+
 .button2 {
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #4b5563;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
+    padding: 8px 18px;
+
+    border-radius: 999px;
+
+    font-size: clamp(13px, 1.8vw, 15px);
+
+    font-weight: 500;
+
+    color: #4b5563;
+
+    cursor: pointer;
+
+    background: transparent;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+
+    white-space: nowrap;
 }
 
 .button2:hover {
-  background: #f3f4f6;
-  color: #111827;
+    background: #f3f4f6;
+
+    color: #111827;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 600px) {
+
+    .form {
+        width: 95%;
+    }
+
+    .section,
+    .productSection {
+        padding-left: 12px;
+        padding-right: 12px;
+        gap: 15px;
+    }
+
+    .input {
+        max-width: 220px;
+    }
+
+    .productRows {
+        max-width: 220px;
+    }
+
+    .input_q {
+        width: 60px;
+        flex: 0 0 60px;
+    }
+
+    .request {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .imagesec {
+        width: 100%;
+    }
+}
+
+/* Very small screens */
+
+@media (max-width: 380px) {
+
+    .head1 {
+        text-align: center;
+        width: 100%;
+    }
+
+    .imagesec {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .section1 {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .section,
+    .productSection {
+        gap: 8px;
+    }
+
+    .input {
+        max-width: 180px;
+    }
+
+    .productRows {
+        max-width: 180px;
+    }
+
+    .input_q {
+        width: 50px;
+        flex: 0 0 50px;
+
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+
+    .productInputs {
+        gap: 5px;
+    }
 }
