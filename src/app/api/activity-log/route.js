@@ -1,7 +1,11 @@
 import db from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/authGuard'
 
 export async function GET(request) {
+    const guard = await requireAdmin();
+    if (guard) return guard;
+
     try {
         const { searchParams } = new URL(request.url);
         const locationId = searchParams.get("locationId");

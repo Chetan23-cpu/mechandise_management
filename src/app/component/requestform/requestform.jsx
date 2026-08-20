@@ -4,6 +4,7 @@ import styles from "./requestform.module.css";
 import { useState, useEffect } from "react";
 import { IoIosAddCircle } from "react-icons/io";
 import { IoIosRemoveCircle } from "react-icons/io";
+import { useRouter } from "next/navigation";
 
 const emptyRow = () => ({
   productId: "",
@@ -11,6 +12,7 @@ const emptyRow = () => ({
 });
 
 const RequestForm = () => {
+  const router = useRouter();
   const [locations, setLocations] = useState([]);
   const [locationId, setLocationId] = useState("");
   const [loadingLocations, setLoadingLocations] = useState(true);
@@ -225,7 +227,18 @@ const RequestForm = () => {
   };
 
   return (
-    <>
+    <> 
+    <div className={styles.main1}>
+      <div className={styles.head1}>Merchandise and Asset Management System</div>
+      <div className={styles.section1}>
+        <div
+          className={styles.button2}
+          onClick={() => router.push("/location")}
+        >
+          Locations
+        </div>
+      </div>
+    </div>
       <div className={styles.main}>
         <div className={styles.heading}>
           <div>Merchandise Request Form</div>
@@ -243,7 +256,7 @@ const RequestForm = () => {
           <div className={styles.section}>
             <label>Email</label>
             <input
-              value={email}
+              value={email} 
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className={styles.input}

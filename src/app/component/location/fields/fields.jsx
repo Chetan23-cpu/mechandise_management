@@ -39,13 +39,30 @@ const Locationfields = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [currentEmail, setCurrentEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoaded, setIsAdminLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/me")
       .then((res) => res.json())
-      .then((data) => setCurrentEmail(data.user?.email || ""))
-      .catch((err) => console.error("Failed to fetch current user", err));
+      .then((data) => {
+        setCurrentEmail(data.user?.email || "");
+        const admin = data.user?.isAdmin;
+        setIsAdmin(admin === true || admin === "Yes");
+      })
+      .catch((err) => console.error("Failed to fetch current user", err))
+      .finally(() => setIsAdminLoaded(true));
   }, []);
+
+  // if a non-admin somehow ends up with activeTab set to an admin-only tab
+  // (e.g. stale state, a manual tab-change call, or a deep link), send them
+  // to the unauthorized page instead of silently showing/hiding content
+  useEffect(() => {
+    if (!isAdminLoaded) return;
+    if (!isAdmin && (activeTab === "users" || activeTab === "activitylog")) {
+      router.push("/unauthorized");
+    }
+  }, [isAdmin, isAdminLoaded, activeTab, router]);
 
   const fetchLocations = async () => {
     try {
@@ -73,9 +90,17 @@ const Locationfields = () => {
     try {
       const res = await fetch("/api/users");
       const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data)) {
+        console.error("Failed to fetch users", data?.error || data);
+        setUsers([]);
+        return;
+      }
+
       setUsers(data);
     } catch (err) {
       console.error("Failed to fetch users", err);
+      setUsers([]);
     } finally {
       setLoadingUsers(false);
     }
@@ -83,8 +108,18 @@ const Locationfields = () => {
 
   useEffect(() => {
     fetchLocations();
-    fetchUsers();
   }, []);
+
+  // only fetch the admin-only users list once we know the user is admin
+  useEffect(() => {
+    if (!isAdminLoaded) return;
+    if (isAdmin) {
+      fetchUsers();
+    } else {
+      setUsers([]);
+      setLoadingUsers(false);
+    }
+  }, [isAdmin, isAdminLoaded]);
 
   const handleLocationAdded = (newLocation) => {
     setLocations((prev) => [...prev, newLocation]);
@@ -170,16 +205,17 @@ const Locationfields = () => {
   };
   useEffect(() => {
     if (activeTab !== "activitylog") return;
+    if (!isAdmin) return;
 
     const timer = setTimeout(() => {
       fetchActivityLogs(1, activitySearchTerm);
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [activitySearchTerm, activeTab]);
+  }, [activitySearchTerm, activeTab, isAdmin]);
 
   // NEW: filter users by name, email, location access, or admin status
-  const filteredUsers = users.filter((u) => {
+  const filteredUsers = (Array.isArray(users) ? users : []).filter((u) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
 
@@ -307,7 +343,7 @@ const Locationfields = () => {
           </>
         )}
 
-        {activeTab === "users" && (
+        {activeTab === "users" && isAdmin && (
           <div className={styles.merchandise}>
             <div className={styles.detailhead}>Users</div>
 
@@ -397,7 +433,7 @@ const Locationfields = () => {
           </div>
         )}
 
-        {activeTab === "activitylog" && (
+        {activeTab === "activitylog" && isAdmin && (
           <div className={styles.merchandise}>
             <div className={styles.detailhead}>Activity Log</div>
 

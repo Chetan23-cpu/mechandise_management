@@ -5,10 +5,13 @@ import styles from "./locationheader.module.css";
 import { FaUser } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 
-const LocationHeader = ({ activeTab, onTabChange }) => {
+// Pass `isAdmin` as a prop if you already know it (e.g. from a session/auth
+// context higher up the tree) to skip the fetch below entirely.
+const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
   const router = useRouter();
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(isAdminProp ?? false);
   const menuRef = useRef(null);
 
   // close the dropdown when clicking anywhere outside it
@@ -21,6 +24,25 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // if the caller didn't pass isAdmin directly, fetch the current user
+  useEffect(() => {
+    if (isAdminProp !== undefined) return;
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        const admin = data?.user?.isAdmin;
+        setIsAdmin(admin === true || admin === "Yes");
+      } catch (err) {
+        console.error("Failed to fetch current user", err);
+        setIsAdmin(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [isAdminProp]);
 
   const handleLogout = async () => {
     try {
@@ -44,6 +66,10 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
   };
 
   const goToUsersTab = () => {
+    if (!isAdmin) {
+      router.push("/unauthorized");
+      return;
+    }
     if (onTabChange) {
       onTabChange("users");
     } else {
@@ -52,6 +78,10 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
   };
 
   const goToActivityLogTab = () => {
+    if (!isAdmin) {
+      router.push("/unauthorized");
+      return;
+    }
     if (onTabChange) {
       onTabChange("activitylog");
     } else {
@@ -69,20 +99,27 @@ const LocationHeader = ({ activeTab, onTabChange }) => {
         >
           Locations
         </div>
-        <div
-          className={`${styles.button2} ${activeTab === "users" ? styles.active : ""}`}
-          onClick={goToUsersTab}
-        >
-          Users
-        </div>
-        <div
-          className={`${styles.button2} ${
-            activeTab === "activitylog" ? styles.active : ""
-          }`}
-          onClick={goToActivityLogTab}
-        >
-          Activity Log
-        </div>
+
+        {isAdmin && (
+          <div
+            className={`${styles.button2} ${activeTab === "users" ? styles.active : ""}`}
+            onClick={goToUsersTab}
+          >
+            Users
+          </div>
+        )}
+
+        {isAdmin && (
+          <div
+            className={`${styles.button2} ${
+              activeTab === "activitylog" ? styles.active : ""
+            }`}
+            onClick={goToActivityLogTab}
+          >
+            Activity Log
+          </div>
+        )}
+
         <div
           className={styles.button2}
           onClick={() => router.push("/requestform")}

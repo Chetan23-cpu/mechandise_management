@@ -2,14 +2,24 @@ import db from '@/lib/db'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import { logActivity } from "@/lib/logActivity";
+import { requireAdmin } from "@/lib/authGuard";
 
 export async function GET(request) {
+    const guard = await requireAdmin();
+    if (guard) return guard;
+
     try {
         const { searchParams } = new URL(request.url);
         const locationId = searchParams.get("locationId");
 
         let query = db("users")
-            .select("*")
+            .select(
+                "id",
+                "name",
+                "email",
+                "isAdmin",
+                "location"
+            )
             .orderBy("id");
 
         const users = await query;
@@ -34,6 +44,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+    const guard = await requireAdmin();
+    if (guard) return guard;
+
     try {
         const body = await request.json();
         const { name, email, password, location, isAdmin, actorEmail } = body;
