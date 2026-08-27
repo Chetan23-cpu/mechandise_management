@@ -59,13 +59,15 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
   return (
     <div className={styles.main}>
       <div className={styles.imagesec}>
-        <Image
+        {/* <Image
                   src="/images/logo.png"
                   alt="Access Denied"
                   width={65}
                   height={65} 
                   style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                />
+                  className={styles.image}
+                  onClick={() => router.push("/location")}
+                /> */}
       <div className={styles.head}>Merchandise and Asset Management System</div>
       </div>
       <div className={styles.section}>

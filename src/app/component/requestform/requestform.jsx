@@ -122,6 +122,19 @@ const RequestForm = () => {
     fetchProducts();
   }, [locationId, productType]);
 
+  // look up a product's available stock for the current type ("quantity"
+  // is only populated for merchandise right now — reusables don't carry
+  // a confirmed stock column, so this returns null for them)
+  const getAvailableQuantity = (productId) => {
+    if (!productId) return null;
+    const product = products.find(
+      (p) => String(p.id) === String(productId),
+    );
+    if (!product) return null;
+    if (productType !== "merchandise") return null;
+    return product.quantity ?? null;
+  };
+
   const handleProductChange = (index, productId) => {
     setRows((prev) =>
       prev.map((row, i) => (i === index ? { ...row, productId } : row)),
@@ -231,13 +244,13 @@ const RequestForm = () => {
     <> 
     <div className={styles.main1}>
       <div className={styles.imagesec}>
-        <Image
+        {/* <Image
                   src="/images/logo.png"
                   alt="Access Denied"
                   width={65}
                   height={65} 
                   style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                />
+                /> */}
       <div className={styles.head1}>Merchandise and Asset Management System</div>
       </div>
       <div className={styles.section1}>
@@ -262,7 +275,7 @@ const RequestForm = () => {
               placeholder="Enter your name"
               className={styles.input}
             ></input>
-          </div>
+          </div> 
           <div className={styles.section}>
             <label>Email</label>
             <input
@@ -328,6 +341,7 @@ const RequestForm = () => {
             <div className={styles.productRows}>
               {rows.map((row, index) => {
                 const isLastRow = index === rows.length - 1;
+                const availableQty = getAvailableQuantity(row.productId);
 
                 const rowInputs = (
                   <div className={styles.productInputs}>
@@ -357,6 +371,15 @@ const RequestForm = () => {
                       className={styles.input_q}
                       placeholder="Qty"
                       disabled={productType === "reusable"}
+                    ></input>
+                    <input
+                      value={
+                        availableQty === null ? "" : availableQty
+                      }
+                      className={styles.input_q}
+                      placeholder="Available Qty"
+                      readOnly
+                      disabled
                     ></input>
 
                     {rows.length > 1 && (

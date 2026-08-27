@@ -12,7 +12,8 @@ import Merchandise from "./mechandise";
 import Reusable from "./reusable";
 import PendingRequest from "./pendingRequest";
 import ActivityLog from "./activitylog";
-import Users from "./users";
+import Users from "./users"; 
+import Print from "./print_pos.jsx";
 
 const AssetMain = () => {
   const [activeSection, setActiveSection] = useState("merchandise");
@@ -29,6 +30,11 @@ const AssetMain = () => {
         >
           <FaBoxOpen className={styles.merch} />
           <h2>Merchandise Stock</h2>
+        </div>
+        <div
+          className={`${styles.section} ${activeSection === "print" ? styles.active : ""}`}
+          onClick={() => setActiveSection("print")}>
+          <h2>Print & POS</h2>
         </div>
 
         <div
@@ -77,6 +83,9 @@ const AssetMain = () => {
           )}
           {activeSection === "reusable" && (
             <Reusable locationId={locationId} locationName={locationName} />
+          )}
+          {activeSection === "print" && (
+            <Print locationId={locationId} locationName={locationName}/>
           )}
           {activeSection === "pending" && <PendingRequest locationId={locationId} />}
           {activeSection === "activity" && <ActivityLog locationId={locationId} />}

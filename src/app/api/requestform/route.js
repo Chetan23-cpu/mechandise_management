@@ -23,7 +23,7 @@ export async function GET(request) {
         if (locationId && type) {
             if (type === "merchandise") {
                 const products = await db("merchandises")
-                    .select("id", "name")
+                    .select("id", "name", "quantity")
                     .where({ location: locationId })
                     .orderBy("name");
                 return NextResponse.json(products);

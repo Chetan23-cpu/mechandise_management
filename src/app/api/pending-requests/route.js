@@ -29,7 +29,7 @@ export async function GET(request) {
                 qb = qb.where((builder) => {
                     builder
                         .whereRaw("LOWER(r.request_no) LIKE ?", [term])
-                        .orWhereRaw("LOWER(r.email) LIKE ?", [term])
+                        .orWhereRaw("LOWER(r.name) LIKE ?", [term])
                         .orWhereRaw("LOWER(r.requested_to) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.type) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.status) LIKE ?", [term])
@@ -51,25 +51,50 @@ export async function GET(request) {
                 "ri.quantity",
                 "ri.status",
                 "r.request_no",
-                "r.email",
+                "r.name",
                 "r.requested_to",
                 "r.created_at as date",
-                db.raw("COALESCE(m.name, re.name) as item_name")
+                db.raw("COALESCE(m.name, re.name) as item_name"),
+                "m.quantity as merch_quantity",
+                "re.status as reusable_status"
             )
             .orderBy("r.created_at", "desc")
             .limit(limit)
             .offset(offset);
 
+        // merchandise: use its stock quantity directly.
+        // reusable: reusables don't track a numeric stock count — instead
+        // their own `status` column tells us if the single unit is
+        // available: "store" means it's on the shelf (1 available),
+        // "checkedout" means it's out (0 available).
+        const getAvailableQuantity = (row) => {
+            if (row.type === "merchandise") {
+                return row.merch_quantity ?? null;
+            }
+            if (row.type === "reusable") {
+                const status = (row.reusable_status || "").toLowerCase();
+                if (status === "checkedout" || status === "checked out" || status === "checked_out") {
+                    return 0;
+                }
+                if (status === "store") {
+                    return 1;
+                }
+                return null;
+            }
+            return null;
+        };
+
         const result = items.map((i) => ({
             itemId: i.item_id,
             requestNo: i.request_no,
-            email: i.email,
+            email: i.name,
             requested_to: i.requested_to,
             date: i.date,
             type: i.type,
             itemName: i.item_name || "Unknown",
             quantity: i.quantity,
             status: i.status,
+            avl_qty: getAvailableQuantity(i),
         }));
 
         return NextResponse.json({

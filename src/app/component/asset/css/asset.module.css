@@ -248,3 +248,6 @@
   align-items: center;
   gap: 15px
 }
+.image{
+  cursor: pointer;
+}

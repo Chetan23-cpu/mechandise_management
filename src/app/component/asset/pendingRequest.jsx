@@ -77,9 +77,29 @@ const PendingRequest = ({ locationId }) => {
 
         const updated = await res.json();
         setItems((prev) =>
-            prev.map((item) =>
-                item.itemId === updated.id ? { ...item, status: updated.status } : item
-            )
+            prev.map((item) => {
+                if (item.itemId !== updated.id) return item;
+
+                // status update is always safe to apply locally
+                const next = { ...item, status: updated.status };
+
+                // only approving actually changes stock on the backend —
+                // mirror that here so the table doesn't show a stale
+                // available quantity until the next full fetch
+                if (status === "approved") {
+                    if (item.type === "merchandise") {
+                        const currentQty = Number(item.avl_qty);
+                        const requestedQty = Number(item.quantity);
+                        next.avl_qty = Number.isFinite(currentQty) && Number.isFinite(requestedQty)
+                            ? Math.max(0, currentQty - requestedQty)
+                            : item.avl_qty;
+                    } else if (item.type === "reusable") {
+                        next.avl_qty = 0;
+                    }
+                }
+
+                return next;
+            })
         );
     } catch (err) {
         console.error("Failed to update status", err);
@@ -183,7 +203,8 @@ const PendingRequest = ({ locationId }) => {
                         <th className={styles.head}>Date</th>
                         <th className={styles.head}>Type</th>
                         <th className={styles.head}>Item</th>
-                        <th className={styles.head}>Quantity</th>
+                        <th className={styles.head}>Available Qty</th>
+                        <th className={styles.head}>Req Qty</th>
                         <th className={styles.head}>Status</th>
                         <th className={styles.head}>Action</th>
                     </tr>
@@ -206,7 +227,21 @@ const PendingRequest = ({ locationId }) => {
                                 <td>{new Date(row.date).toLocaleDateString()}</td>
                                 <td>{row.type}</td>
                                 <td>{row.itemName}</td>
+                                <td>
+                                    <span
+                                        className={styles.available}
+                                        style={{
+                                            backgroundColor:
+                                                Number(row.avl_qty) > Number(row.quantity)
+                                                    ? "#80ef80"
+                                                    : "#FF746C",
+                                        }}
+                                    >
+                                        {row.avl_qty}
+                                    </span>
+                                </td>
                                 <td>{row.quantity}</td>
+                                
                                 <td>{row.status}</td>
                                 <td className={styles.button}>
                                     {row.status === "pending" ? (

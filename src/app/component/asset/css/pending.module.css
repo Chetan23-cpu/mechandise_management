@@ -244,3 +244,10 @@
     transition:
         transform 0.5s ease;
 }
+
+.available{
+    padding: 8px;
+    background-color: #80ef80;
+    border-radius: 5px;
+    font-weight: 600;
+}

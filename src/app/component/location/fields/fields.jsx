@@ -54,9 +54,6 @@ const Locationfields = () => {
       .finally(() => setIsAdminLoaded(true));
   }, []);
 
-  // if a non-admin somehow ends up with activeTab set to an admin-only tab
-  // (e.g. stale state, a manual tab-change call, or a deep link), send them
-  // to the unauthorized page instead of silently showing/hiding content
   useEffect(() => {
     if (!isAdminLoaded) return;
     if (!isAdmin && (activeTab === "users" || activeTab === "activitylog")) {
@@ -430,6 +427,39 @@ const Locationfields = () => {
                 user={selectedUser}
               />
             )}
+          </div>
+        )}
+
+        {activeTab === "divisions" && isAdmin && (
+          <div className={styles.merchandise}>
+            <div className={styles.detailhead}>Divisions</div>
+            <div className={styles.searchsection}>
+              <div className={styles.search}>
+                <input
+                  placeholder="Search..."
+                  className={styles.input}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className={styles.add} onClick={() => setAddDivisionModal(true)}>
+                <IoBagAdd className={styles.bag} />
+                <div className={styles.text}>Add Divisions</div>
+              </div>
+            </div>
+            <table className={styles.table}>
+              <thead>
+                <tr className={styles.tableheading}>
+                  <th className={styles.head}>S.No</th>
+                  <th className={styles.head}>Divisions</th>
+                  <th className={styles.head}>Location</th>
+                  <th className={styles.head}>Action</th>
+                </tr>
+              </thead>
+            </table>
+            <tbody>
+              
+            </tbody>
           </div>
         )}
 

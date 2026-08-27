@@ -78,6 +78,18 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     }
   };
 
+  const goToDivisionTab = () => {
+    if (!isAdmin){
+      router.push("/unauthorized");
+      return;
+    }
+    if (onTabChange) {
+      onTabChange("divisions");
+    } else{
+      router.push("/?tab=divisions");
+    }
+  }
+
   const goToActivityLogTab = () => {
     if (!isAdmin) {
       router.push("/unauthorized");
@@ -93,13 +105,15 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
   return (
     <div className={styles.main}>
       <div className={styles.imagesec}>
-        <Image
+        {/* <Image
                   src="/images/logo.png"
                   alt="Access Denied"
                   width={65}
                   height={65} 
                   style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                />
+                  className={styles.image}
+                  onClick={() => router.push("/location")}
+                /> */}
       <div className={styles.head}>Merchandise and Asset Management System</div>
       </div>
       <div className={styles.section}> 
@@ -108,7 +122,15 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
           onClick={goToLocationTab}
         >
           Locations
-        </div>
+        </div> 
+        {isAdmin && (
+          <div
+            className={`${styles.button2} ${activeTab === "divisions" ? styles.active : ""}`}
+            onClick={goToDivisionTab}
+          >
+            Divisions
+          </div>
+        )}
 
         {isAdmin && (
           <div
