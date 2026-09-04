@@ -294,13 +294,13 @@ const RequestForm = () => {
     <> 
     <div className={styles.main1}>
       <div className={styles.imagesec}>
-        {/* <Image
+        <Image
                   src="/images/logo.png"
                   alt="Access Denied"
                   width={65}
                   height={65} 
                   style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                /> */}
+                />
       <div className={styles.head1}>Merchandise and Asset Management System</div>
       </div>
       <div className={styles.section1}>
