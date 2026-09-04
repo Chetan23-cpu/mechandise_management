@@ -6,6 +6,7 @@ import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import PrintPosAddModal from "./print_pos_addModal";
 import EditPrintPosModal from "./print_pos_editModal";
+import DeleteConfirmModal from "./deleteModal";
 import { FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -16,14 +17,16 @@ const PrintPos = ({ locationId, locationName }) => {
   const [isEditProductModal, setEditProductModal] = useState(false);
   const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [divisions, setDivisions] = useState();
+  const [divisions, setDivisions] = useState([]);
   const limit = 10;
 
   const fetchPrintPos = async () => {
@@ -78,34 +81,35 @@ const PrintPos = ({ locationId, locationName }) => {
     setSelectedProduct(null);
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+  const openDeleteModal = (row) => {
+    setDeleteTarget(row);
+    setDeleteModalOpen(true);
+  };
 
-    try {
-      setDeletingId(id);
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
 
-      // get current user's email
-      const meRes = await fetch("/api/me");
-      const meData = await meRes.json().catch(() => ({}));
-      const email = meData.user?.email || "";
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
-      const res = await fetch(
-        `/api/print_pos/${id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" },
-      );
+    // get current user's email
+    const meRes = await fetch("/api/me");
+    const meData = await meRes.json().catch(() => ({}));
+    const email = meData.user?.email || "";
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete item");
-      }
+    const res = await fetch(
+      `/api/print_pos/${deleteTarget.id}?email=${encodeURIComponent(email)}`,
+      { method: "DELETE" },
+    );
 
-      fetchPrintPos();
-    } catch (err) {
-      console.error("Failed to delete item", err);
-      alert(err.message || "Failed to delete item");
-    } finally {
-      setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to delete item");
     }
+
+    fetchPrintPos();
   };
 
   const handleDownloadPdf = async () => {
@@ -187,6 +191,7 @@ const PrintPos = ({ locationId, locationName }) => {
               className={styles.input}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
           <div
@@ -272,11 +277,8 @@ const PrintPos = ({ locationId, locationName }) => {
                   </span>
                   <span
                     className={styles.delete}
-                    onClick={() => handleDeleteProduct(row.id)}
-                    style={{
-                      opacity: deletingId === row.id ? 0.5 : 1,
-                      cursor: "pointer",
-                    }}
+                    onClick={() => openDeleteModal(row)}
+                    style={{ cursor: "pointer" }}
                   >
                     <MdDelete />
                   </span>
@@ -320,6 +322,14 @@ const PrintPos = ({ locationId, locationName }) => {
           onClose={closeEditModal}
           onUpdate={handlePrintPosUpdated}
           product={selectedProduct}
+        />
+      )}
+      {isDeleteModalOpen && (
+        <DeleteConfirmModal
+          onClose={closeDeleteModal}
+          onConfirm={handleConfirmDelete}
+          itemName={deleteTarget?.name}
+          itemLabel="print & POS item"
         />
       )}
     </div>

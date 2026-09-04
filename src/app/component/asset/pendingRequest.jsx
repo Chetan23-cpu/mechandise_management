@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import DeclineReasonModal from "./declineReasonModal";
 
 const PendingRequest = ({ locationId, onStatusChanged }) => {
     const [items, setItems] = useState([]);
@@ -18,6 +19,9 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [divisions, setDivisions] = useState([]);
     const limit = 10;
+
+    const [declineTarget, setDeclineTarget] = useState(null);
+    const [isDeclineModalOpen, setDeclineModalOpen] = useState(false);
 
     const fetchItems = async () => {
         setLoading(true);
@@ -69,11 +73,38 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
         return division?.name || "—";
     };
 
-    const handleStatusChange = async (itemId, status) => {
+    const applyStatusLocally = (updated, status) => {
+        setItems((prev) =>
+            prev.map((item) => {
+                if (item.itemId !== updated.id) return item;
+
+                // status update is always safe to apply locally
+                const next = { ...item, status: updated.status };
+
+                // only approving actually changes stock on the backend —
+                // mirror that here so the table doesn't show a stale
+                // available quantity until the next full fetch
+                if (status === "approved") {
+                    if (item.type === "merchandise" || item.type === "print_pos") {
+                        const currentQty = Number(item.avl_qty);
+                        const requestedQty = Number(item.quantity);
+                        next.avl_qty = Number.isFinite(currentQty) && Number.isFinite(requestedQty)
+                            ? Math.max(0, currentQty - requestedQty)
+                            : item.avl_qty;
+                    } else if (item.type === "reusable") {
+                        next.avl_qty = 0;
+                    }
+                }
+
+                return next;
+            })
+        );
+    };
+
+    const handleApprove = async (itemId) => {
         try {
             setActingId(itemId);
 
-            // get current (approving/declining) user's email
             const meRes = await fetch("/api/me");
             const meData = await meRes.json().catch(() => ({}));
             const email = meData.user?.email || "";
@@ -81,7 +112,7 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
             const res = await fetch(`/api/pending-requests/${itemId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status, email }),
+                body: JSON.stringify({ status: "approved", email }),
             });
 
             if (!res.ok) {
@@ -90,39 +121,57 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
             }
 
             const updated = await res.json();
-            setItems((prev) =>
-                prev.map((item) => {
-                    if (item.itemId !== updated.id) return item;
+            applyStatusLocally(updated, "approved");
 
-                    // status update is always safe to apply locally
-                    const next = { ...item, status: updated.status };
-
-                    // only approving actually changes stock on the backend —
-                    // mirror that here so the table doesn't show a stale
-                    // available quantity until the next full fetch
-                    if (status === "approved") {
-                        if (item.type === "merchandise" || item.type === "print_pos") {
-                            const currentQty = Number(item.avl_qty);
-                            const requestedQty = Number(item.quantity);
-                            next.avl_qty = Number.isFinite(currentQty) && Number.isFinite(requestedQty)
-                                ? Math.max(0, currentQty - requestedQty)
-                                : item.avl_qty;
-                        } else if (item.type === "reusable") {
-                            next.avl_qty = 0;
-                        }
-                    }
-
-                    return next;
-                })
-            );
-
-            // notify the parent so the header's pending count refreshes immediately
             if (onStatusChanged) {
                 onStatusChanged();
             }
         } catch (err) {
             console.error("Failed to update status", err);
             alert(err.message || "Failed to update status");
+        } finally {
+            setActingId(null);
+        }
+    };
+
+    const openDeclineModal = (row) => {
+        setDeclineTarget(row);
+        setDeclineModalOpen(true);
+    };
+
+    const closeDeclineModal = () => {
+        setDeclineModalOpen(false);
+        setDeclineTarget(null);
+    };
+
+    const handleConfirmDecline = async (reason) => {
+        if (!declineTarget) return;
+
+        const itemId = declineTarget.itemId;
+        setActingId(itemId);
+
+        try {
+            const meRes = await fetch("/api/me");
+            const meData = await meRes.json().catch(() => ({}));
+            const email = meData.user?.email || "";
+
+            const res = await fetch(`/api/pending-requests/${itemId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "declined", email, reason }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || "Failed to decline request");
+            }
+
+            const updated = await res.json();
+            applyStatusLocally(updated, "declined");
+
+            if (onStatusChanged) {
+                onStatusChanged();
+            }
         } finally {
             setActingId(null);
         }
@@ -277,7 +326,7 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                                                 onClick={() =>
                                                     actingId === row.itemId
                                                         ? null
-                                                        : handleStatusChange(row.itemId, "approved")
+                                                        : handleApprove(row.itemId)
                                                 }
                                                 style={{ opacity: actingId === row.itemId ? 0.5 : 1 }}
                                             >
@@ -288,7 +337,7 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                                                 onClick={() =>
                                                     actingId === row.itemId
                                                         ? null
-                                                        : handleStatusChange(row.itemId, "declined")
+                                                        : openDeclineModal(row)
                                                 }
                                                 style={{ opacity: actingId === row.itemId ? 0.5 : 1 }}
                                             >
@@ -324,6 +373,14 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                     Next
                 </button>
             </div>
+
+            {isDeclineModalOpen && (
+                <DeclineReasonModal
+                    onClose={closeDeclineModal}
+                    onConfirm={handleConfirmDecline}
+                    itemName={declineTarget?.itemName}
+                />
+            )}
         </div>
     );
 };

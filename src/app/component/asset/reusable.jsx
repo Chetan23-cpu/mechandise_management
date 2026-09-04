@@ -8,6 +8,7 @@ import ReuseProductAddModal from "./reuseModal";
 import { useState, useEffect } from "react";
 import ReuseProductEditModal from "./reuseproducteditmodal";
 import CheckoutModal from "./checkout_modal";
+import DeleteConfirmModal from "./deleteModal";
 import { GiReturnArrow } from "react-icons/gi";
 import CheckinModal from "./checkin_modal";
 import { FaFilePdf } from "react-icons/fa";
@@ -20,11 +21,13 @@ const Reusable = ({ locationId, locationName }) => {
   const [isReuseProductEditModal, setReuseProductEditModal] = useState(false);
   const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
   const [isCheckoutModal, setCheckoutModal] = useState(false);
   const [checkoutAsset, setCheckoutAsset] = useState(null);
   const [isCheckinModal, setCheckinModal] = useState(false);
   const [checkinAsset, setCheckinAsset] = useState(null);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,34 +108,35 @@ const Reusable = ({ locationId, locationName }) => {
     setSelectedReuseProduct(null);
   };
 
-  const handleDeleteReusable = async (id) => {
-    if (!confirm("Are you sure you want to delete this asset?")) return;
+  const openDeleteModal = (row) => {
+    setDeleteTarget(row);
+    setDeleteModalOpen(true);
+  };
 
-    try {
-      setDeletingId(id);
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
 
-      // get current user's email
-      const meRes = await fetch("/api/me");
-      const meData = await meRes.json().catch(() => ({}));
-      const email = meData.user?.email || "";
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
-      const res = await fetch(
-        `/api/reusable/${id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" }
-      );
+    // get current user's email
+    const meRes = await fetch("/api/me");
+    const meData = await meRes.json().catch(() => ({}));
+    const email = meData.user?.email || "";
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete asset");
-      }
+    const res = await fetch(
+      `/api/reusable/${deleteTarget.id}?email=${encodeURIComponent(email)}`,
+      { method: "DELETE" },
+    );
 
-      fetchReusables();
-    } catch (err) {
-      console.error("Failed to delete reusable", err);
-      alert(err.message || "Failed to delete asset");
-    } finally {
-      setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to delete asset");
     }
+
+    fetchReusables();
   };
 
   const handleDownloadPdf = async () => {
@@ -203,6 +207,7 @@ const Reusable = ({ locationId, locationName }) => {
               className={styles.input}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
           <div
@@ -288,11 +293,8 @@ const Reusable = ({ locationId, locationName }) => {
                   </span>
                   <span
                     className={styles.delete}
-                    onClick={() => handleDeleteReusable(row.id)}
-                    style={{
-                      opacity: deletingId === row.id ? 0.5 : 1,
-                      cursor: "pointer",
-                    }}
+                    onClick={() => openDeleteModal(row)}
+                    style={{ cursor: "pointer" }}
                   >
                     <MdDelete />
                   </span>
@@ -372,6 +374,14 @@ const Reusable = ({ locationId, locationName }) => {
           onClose={() => setCheckinModal(false)}
           onCheckedIn={handleAssetCheckedOut}
           asset={checkinAsset}
+        />
+      )}
+      {isDeleteModalOpen && (
+        <DeleteConfirmModal
+          onClose={closeDeleteModal}
+          onConfirm={handleConfirmDelete}
+          itemName={deleteTarget?.name}
+          itemLabel="reusable asset"
         />
       )}
     </div>

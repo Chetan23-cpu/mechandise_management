@@ -11,6 +11,9 @@ import {
   CartesianGrid,
 } from "recharts";
 import styles from "../css/topcard2.module.css";
+import { HiLocationMarker } from "react-icons/hi";
+import { TbLocationFilled } from "react-icons/tb";
+import { FaBoxTissue } from "react-icons/fa";
 
 const TABS = [
   { key: "monthly", label: "Monthly" },
@@ -23,6 +26,13 @@ const Topcard2 = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [topStats, setTopStats] = useState({
+    topLocation: null,
+    topDivision: null,
+    topProduct: null,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -30,7 +40,7 @@ const Topcard2 = () => {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/dashboard-data?period=${period}&productType=print_pos`,
+          `/api/dashboard-data?period=${period}&productType=merchandise`,
         );
         const json = await res.json();
         if (!cancelled) {
@@ -50,11 +60,41 @@ const Topcard2 = () => {
     };
   }, [period]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTopStats = async () => {
+      setLoadingStats(true);
+      try {
+        const res = await fetch(
+          `/api/dashboard-data/top-removed?period=${period}&productType=merchandise`,
+        );
+        const json = await res.json();
+        if (!cancelled) {
+          setTopStats({
+            topLocation: json.topLocation || null,
+            topDivision: json.topDivision || null,
+            topProduct: json.topProduct || null,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch top removed stats", err);
+      } finally {
+        if (!cancelled) setLoadingStats(false);
+      }
+    };
+
+    fetchTopStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [period]);
+
   return (
     <div>
       <div className={styles.card}>
         <div className={styles.title}>
-          <div className={styles.heading}>Print & PoS Movement</div>
+          <div className={styles.heading}>Top Performer: Merchandise</div>
           <div className={styles.button}>
             {TABS.map((tab) => (
               <button
@@ -70,24 +110,54 @@ const Topcard2 = () => {
           </div>
         </div>
 
-        <div className={styles.chartWrapper}>
-          {loading ? (
-            <div className={styles.chartMessage}>Loading...</div>
-          ) : data.length === 0 ? (
-            <div className={styles.chartMessage}>No data available</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="added_qty" name="Added" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="removed_qty" name="Removed" fill="#f87171" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+        <div className={styles.input}>
+          <div className={styles.location}>
+            <div className={styles.locationmarker}>
+              <HiLocationMarker />
+            </div>
+            <div className={styles.locationtitle}>
+              <span className={styles.label}>Location</span>
+              <span className={styles.count}>
+                {loadingStats
+                  ? "…"
+                  : topStats.topLocation
+                    ? `${topStats.topLocation.name} (${topStats.topLocation.totalRemoved})`
+                    : "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.division}>
+            <div className={styles.divisionmarker}>
+              <TbLocationFilled />
+            </div>
+            <div className={styles.divisiontitle}>
+              <span className={styles.label}>Division</span>
+              <span className={styles.count}>
+                {loadingStats
+                  ? "…"
+                  : topStats.topDivision
+                    ? `${topStats.topDivision.divisionName} — ${topStats.topDivision.locationName} (${topStats.topDivision.totalRemoved})`
+                    : "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.merchandise}>
+            <div className={styles.merchandisemarker}>
+              <FaBoxTissue />
+            </div>
+            <div className={styles.merchandisetitle}>
+              <span className={styles.label}>Merchandise</span>
+              <span className={styles.count}>
+                {loadingStats
+                  ? "…"
+                  : topStats.topProduct
+                    ? `${topStats.topProduct.name} (${topStats.topProduct.productCode}) — ${topStats.topProduct.totalRemoved}`
+                    : "—"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

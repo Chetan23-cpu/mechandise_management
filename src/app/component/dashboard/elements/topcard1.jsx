@@ -1,93 +1,123 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
 import styles from "../css/topcard1.module.css";
-
-const TABS = [
-  { key: "monthly", label: "Monthly" },
-  { key: "quarterly", label: "Quarterly" },
-  { key: "yearly", label: "Yearly" },
-];
+import { HiLocationMarker } from "react-icons/hi";
+import { TbLocationFilled } from "react-icons/tb";
+import { FaUser } from "react-icons/fa";
+import { FaBoxTissue } from "react-icons/fa";
+import { RiRecycleFill } from "react-icons/ri";
+import { FaMailBulk } from "react-icons/fa";
 
 const Topcard1 = () => {
-  const [period, setPeriod] = useState("monthly");
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState({
+    locations: null,
+    divisions: null,
+    users: null,
+    merchandise: null,
+    reusable: null,
+    printPos: null,
+  });
 
   useEffect(() => {
-    let cancelled = false;
+    const fetchCounts = async () => {
+      const endpoints = {
+        locations: "/api/locations",
+        divisions: "/api/divisions",
+        users: "/api/users",
+        merchandise: "/api/merchandises?limit=1",
+        reusable: "/api/reusable?limit=1",
+        printPos: "/api/print_pos?limit=1",
+      };
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `/api/dashboard-data?period=${period}&productType=merchandise`,
-        );
-        const json = await res.json();
-        if (!cancelled) {
-          setData(json.data || []);
+      const results = await Promise.allSettled(
+        Object.entries(endpoints).map(([key, url]) =>
+          fetch(url)
+            .then((res) => res.json())
+            .then((data) => ({ key, data })),
+        ),
+      );
+
+      const newCounts = {};
+      results.forEach((result, index) => {
+        const key = Object.keys(endpoints)[index];
+        if (result.status === "fulfilled") {
+          const data = result.value.data;
+          newCounts[key] = Array.isArray(data)
+            ? data.length
+            : data?.total ?? 0;
+        } else {
+          console.error(`[Overview] ${key} failed:`, result.reason);
+          newCounts[key] = 0;
         }
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-        if (!cancelled) setData([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      });
+
+      setCounts(newCounts);
     };
 
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [period]);
+    fetchCounts();
+  }, []);
 
   return (
     <div>
       <div className={styles.card}>
         <div className={styles.title}>
-          <div className={styles.heading}>Merchandise Movement</div>
-          <div className={styles.button}>
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                className={`${styles[tab.key === "quarterly" ? "quaterly" : tab.key]} ${
-                  period === tab.key ? styles.active : ""
-                }`}
-                onClick={() => setPeriod(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className={styles.heading}>Overview</div>
+          <div className={styles.input}>
+            <div className={styles.location}>
+              <div className={styles.locationmarker}>
+                <HiLocationMarker />
+              </div>
+              <div className={styles.locationtitle}>
+                <span className={styles.label}>Locations</span>
+                <span className={styles.count}>{counts.locations ?? "—"}</span>
+              </div>
+            </div>
+            <div className={styles.division}>
+              <div className={styles.divisionmarker}>
+                <TbLocationFilled />
+              </div>
+              <div className={styles.divisiontitle}>
+                <span className={styles.label}>Divisions</span>
+                <span className={styles.count}>{counts.divisions ?? "—"}</span>
+              </div>
+            </div>
+            <div className={styles.users}>
+              <div className={styles.usersmarker}>
+                <FaUser />
+              </div>
+              <div className={styles.userstitle}>
+                <span className={styles.label}>Users</span>
+                <span className={styles.count}>{counts.users ?? "—"}</span>
+              </div>
+            </div>
+            <div className={styles.merchandise}>
+              <div className={styles.merchandisemarker}>
+                <FaBoxTissue />
+              </div>
+              <div className={styles.merchandisetitle}>
+                <span className={styles.label}>Merchandise</span>
+                <span className={styles.count}>{counts.merchandise ?? "—"}</span>
+              </div>
+            </div>
+            <div className={styles.reuasable}>
+              <div className={styles.reuasablemarker}>
+                <RiRecycleFill />
+              </div>
+              <div className={styles.reuasabletitle}>
+                <span className={styles.label}>Reusable</span>
+                <span className={styles.count}>{counts.reusable ?? "—"}</span>
+              </div>
+            </div>
+            <div className={styles.print}>
+              <div className={styles.printmarker}>
+                <FaMailBulk />
+              </div>
+              <div className={styles.printtitle}>
+                <span className={styles.label}>Print & PoS</span>
+                <span className={styles.count}>{counts.printPos ?? "—"}</span>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className={styles.chartWrapper}>
-          {loading ? (
-            <div className={styles.chartMessage}>Loading...</div>
-          ) : data.length === 0 ? (
-            <div className={styles.chartMessage}>No data available</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="added_qty" name="Added" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="removed_qty" name="Removed" fill="#f87171" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
         </div>
       </div>
     </div>

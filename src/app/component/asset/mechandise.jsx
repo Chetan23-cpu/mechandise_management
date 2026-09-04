@@ -6,6 +6,7 @@ import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import ProductAddModal from "./productModal";
 import EditProductModal from "./editproductmodal";
+import DeleteConfirmModal from "./deleteModal";
 import { FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -16,8 +17,10 @@ const Merchandise = ({ locationId, locationName }) => {
   const [isEditProductModal, setEditProductModal] = useState(false);
   const [stockData, setStockData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,34 +89,35 @@ const Merchandise = ({ locationId, locationName }) => {
     setSelectedProduct(null);
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const openDeleteModal = (row) => {
+    setDeleteTarget(row);
+    setDeleteModalOpen(true);
+  };
 
-    try {
-      setDeletingId(id);
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
 
-      // get current user's email
-      const meRes = await fetch("/api/me");
-      const meData = await meRes.json().catch(() => ({}));
-      const email = meData.user?.email || "";
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
-      const res = await fetch(
-        `/api/merchandises/${id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" },
-      );
+    // get current user's email
+    const meRes = await fetch("/api/me");
+    const meData = await meRes.json().catch(() => ({}));
+    const email = meData.user?.email || "";
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete product");
-      }
+    const res = await fetch(
+      `/api/merchandises/${deleteTarget.id}?email=${encodeURIComponent(email)}`,
+      { method: "DELETE" },
+    );
 
-      fetchMerchandise();
-    } catch (err) {
-      console.error("Failed to delete product", err);
-      alert(err.message || "Failed to delete product");
-    } finally {
-      setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to delete product");
     }
+
+    fetchMerchandise();
   };
 
   const handleDownloadPdf = async () => {
@@ -188,6 +192,7 @@ const Merchandise = ({ locationId, locationName }) => {
               className={styles.input}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
           <div
@@ -274,11 +279,8 @@ const Merchandise = ({ locationId, locationName }) => {
                   </span>
                   <span
                     className={styles.delete}
-                    onClick={() => handleDeleteProduct(row.id)}
-                    style={{
-                      opacity: deletingId === row.id ? 0.5 : 1,
-                      cursor: "pointer",
-                    }}
+                    onClick={() => openDeleteModal(row)}
+                    style={{ cursor: "pointer" }}
                   >
                     <MdDelete />
                   </span>
@@ -322,6 +324,14 @@ const Merchandise = ({ locationId, locationName }) => {
           onClose={closeEditModal}
           onUpdate={handleMerchandiseUpdated}
           product={selectedProduct}
+        />
+      )}
+      {isDeleteModalOpen && (
+        <DeleteConfirmModal
+          onClose={closeDeleteModal}
+          onConfirm={handleConfirmDelete}
+          itemName={deleteTarget?.name}
+          itemLabel="product"
         />
       )}
     </div>

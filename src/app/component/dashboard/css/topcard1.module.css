@@ -1,5 +1,3 @@
-
-
 .card{
     height: 300px;
     border-radius: 10px;
@@ -8,9 +6,7 @@
 }
 
 .title{
-    display: flex;
-    flex-direction: row;
-    padding: 10px 20px;
+    padding: 20px 20px;
     align-items: center;
     justify-content: space-between;
 }
@@ -21,51 +17,70 @@
     font-weight: 600;
 }
 
-.button{
+.input{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, auto);
+    gap: 14px 24px;
+    padding: 30px 20px;
+}
+
+.location, .division, .users, .merchandise, .reuasable, .print{
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    color: black;
     align-items: center;
     gap: 5px;
+    padding: 10px 10px;
+    border-radius: 10px;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+     cursor: pointer;
+     transition: transform 0.15s ease;
 }
 
-.button{
-   font-size: 12px;
-  
+.location:hover, .division:hover, .users:hover, .merchandise:hover, .reuasable:hover, .print:hover{
+    transform: scale(1.05);
+}
+.location, .reuasable,.merchandise{
+    background: linear-gradient(to bottom, #fffbe8, #f5d97a);
 }
 
-.monthly, .quaterly, .yearly{
-      padding: 5px 10px;
-      color: black;
-      cursor: pointer;
-      border-radius: 10px;
-      background: linear-gradient(to bottom, #e8f8ec, #8ae0a0);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.15s ease;
+.division, .users, .print{
+    background: linear-gradient(to bottom, #e8fbfa, #7edcd4);
 }
 
-.monthly:hover, .quaterly:hover, .yearly:hover{
-    transform: scale(1.12);
-}
-
-.monthly:active, .quaterly:active, .yearly:active{
-    transform: scale(0.95);
-}
-
-.chartWrapper {
-    padding: 20px 15px;
-    height: 220px;
-}
-
-.chartMessage {
+.locationmarker, .divisionmarker, .usersmarker, .merchandisemarker, .reuasablemarker, .printmarker{
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    height: 100%;
-    color: #555;
-    font-size: 13px;
 }
 
-.active {
-    background: linear-gradient(to bottom, #f5f0ff, #c4a8ff);
+.locationtitle, .divisiontitle, .userstitle, .merchandisetitle, .reuasabletitle, .printtitle{
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.label{
+    white-space: nowrap;
+}
+
+.count{
+    font-weight: 700;
+    margin-left: 12px;
+}
+
+.locationmarker, .usersmarker, .reuasablemarker{
+    color: #e296b0;
+    
+}
+
+.divisionmarker, .merchandisemarker, .printmarker{
+    color: #e296b0;
 }

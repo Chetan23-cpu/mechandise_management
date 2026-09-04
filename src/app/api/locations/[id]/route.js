@@ -63,12 +63,33 @@ export async function PUT(request, { params }) {
             changes.push(`name: ${existingLocation.name} → ${updatedLocation.name}`);
         }
 
-        const existingDivisionsText = existingLocation.divisions.slice().sort().join(",");
-        const updatedDivisionsText = updatedLocation.divisions.slice().sort().join(",");
-        if (existingDivisionsText !== updatedDivisionsText) {
-            changes.push(
-                `divisions: [${existingLocation.divisions.join(", ")}] → [${updatedLocation.divisions.join(", ")}]`,
+        const existingIds = existingLocation.divisions.map(String);
+        const updatedIds = updatedLocation.divisions.map(String);
+
+        const addedIds = updatedIds.filter((d) => !existingIds.includes(d));
+        const removedIds = existingIds.filter((d) => !updatedIds.includes(d));
+
+        if (addedIds.length > 0 || removedIds.length > 0) {
+            const allDivisionRows = await db("divisions").whereIn(
+                "id",
+                [...addedIds, ...removedIds],
             );
+            const divisionNameById = new Map(
+                allDivisionRows.map((d) => [String(d.id), d.name]),
+            );
+
+            const addedNames = addedIds.map((d) => divisionNameById.get(d) || d);
+            const removedNames = removedIds.map((d) => divisionNameById.get(d) || d);
+
+            const divisionChangeParts = [];
+            if (addedNames.length > 0) {
+                divisionChangeParts.push(`added: ${addedNames.join(", ")}`);
+            }
+            if (removedNames.length > 0) {
+                divisionChangeParts.push(`removed: ${removedNames.join(", ")}`);
+            }
+
+            changes.push(`divisions (${divisionChangeParts.join("; ")})`);
         }
 
         const changesText = changes.length > 0 ? ` — ${changes.join(", ")}` : "";

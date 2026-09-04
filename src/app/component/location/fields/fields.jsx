@@ -13,6 +13,7 @@ import LocationHeader from "../header/locationheader";
 import LocationEditModal from "./locationeditModal";
 import AddDivision from "./divisionAddModal";
 import DivisionEditModal from "./divisionEditModal";
+import DeleteConfirmModal from "../../asset/deleteModal";
 
 const Locationfields = () => {
   const [activeTab, setActiveTab] = useState("location");
@@ -24,7 +25,6 @@ const Locationfields = () => {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isLocationEditModal, setLocationEditModal] = useState(false);
-  const [deletingLocationId, setDeletingLocationId] = useState(null);
 
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -36,7 +36,6 @@ const Locationfields = () => {
   const [isAddUserModal, setAddUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditUserModal, setEditUserModal] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -49,7 +48,12 @@ const Locationfields = () => {
   const [loadingDivisions, setLoadingDivisions] = useState(true);
   const [selectedDivision, setSelectedDivision] = useState(null);
   const [isDivisionEditModal, setDivisionEditModal] = useState(false);
-  const [deletingDivisionId, setDeletingDivisionId] = useState(null);
+
+  // Unified delete-confirmation state — `deleteType` tells the handler
+  // which entity (location/user/division) is being removed.
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteType, setDeleteType] = useState(null); // "location" | "user" | "division"
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/me")
@@ -185,30 +189,6 @@ const Locationfields = () => {
     setSelectedLocation(null);
   };
 
-  const handleDeleteLocation = async (id) => {
-    if (!confirm("Are you sure you want to delete this location?")) return;
-
-    try {
-      setDeletingLocationId(id);
-      const res = await fetch(
-        `/api/locations/${id}?email=${encodeURIComponent(currentEmail || "")}`,
-        { method: "DELETE" },
-      );
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete location");
-      }
-
-      setLocations((prev) => prev.filter((loc) => loc.id !== id));
-    } catch (err) {
-      console.error("Failed to delete location", err);
-      alert(err.message || "Failed to delete location");
-    } finally {
-      setDeletingLocationId(null);
-    }
-  };
-
   const handleLocationClick = (loc) => {
     router.push(
       `/asset?locationId=${loc.id}&locationName=${encodeURIComponent(loc.name)}`,
@@ -230,27 +210,6 @@ const Locationfields = () => {
     setSelectedDivision(null);
   };
 
-  const handleDeleteDivision = async (id) => {
-    if (!confirm("Are you sure you want to delete this division?")) return;
-
-    try {
-      setDeletingDivisionId(id);
-      const res = await fetch(`/api/divisions/${id}`, { method: "DELETE" });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete division");
-      }
-
-      setDivisions((prev) => prev.filter((d) => d.id !== id));
-    } catch (err) {
-      console.error("Failed to delete division", err);
-      alert(err.message || "Failed to delete division");
-    } finally {
-      setDeletingDivisionId(null);
-    }
-  };
-
   const handleUserAdded = (newUser) => {
     setUsers((prev) => [...prev, newUser]);
   };
@@ -266,26 +225,72 @@ const Locationfields = () => {
     setSelectedUser(null);
   };
 
-  const handleDeleteUser = async (id) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  // --- Unified delete-confirmation flow ---
 
-    try {
-      setDeletingId(id);
-      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+  const openDeleteModal = (type, item) => {
+    setDeleteType(type);
+    setDeleteTarget(item);
+    setDeleteModalOpen(true);
+  };
 
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+    setDeleteType(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || !deleteType) return;
+
+    if (deleteType === "location") {
+      const res = await fetch(
+        `/api/locations/${deleteTarget.id}?email=${encodeURIComponent(currentEmail || "")}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete location");
+      }
+      setLocations((prev) => prev.filter((loc) => loc.id !== deleteTarget.id));
+      return;
+    }
+
+    if (deleteType === "user") {
+      const res = await fetch(`/api/users/${deleteTarget.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete user");
       }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      return;
+    }
 
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch (err) {
-      console.error("Failed to delete user", err);
-      alert(err.message || "Failed to delete user");
-    } finally {
-      setDeletingId(null);
+    if (deleteType === "division") {
+      const res = await fetch(`/api/divisions/${deleteTarget.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete division");
+      }
+      setDivisions((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+      return;
     }
   };
+
+  const deleteItemLabel =
+    deleteType === "location"
+      ? "location"
+      : deleteType === "user"
+        ? "user"
+        : deleteType === "division"
+          ? "division"
+          : "item";
+
+  const deleteItemName =
+    deleteType === "location" || deleteType === "division"
+      ? deleteTarget?.name
+      : deleteType === "user"
+        ? deleteTarget?.name || deleteTarget?.email
+        : undefined;
 
   useEffect(() => {
     if (activeTab !== "activitylog") return;
@@ -400,10 +405,8 @@ const filteredDivisions = (Array.isArray(divisions) ? divisions : []).filter(
                       </span>
                       <span
                         className={styles.delete}
-                        onClick={() => handleDeleteLocation(loc.id)}
-                        style={{
-                          opacity: deletingLocationId === loc.id ? 0.5 : 1,
-                        }}
+                        onClick={() => openDeleteModal("location", loc)}
+                        style={{ cursor: "pointer" }}
                       >
                         <MdDelete />
                       </span>
@@ -495,11 +498,8 @@ const filteredDivisions = (Array.isArray(divisions) ? divisions : []).filter(
                         </span>
                         <span
                           className={styles.delete}
-                          onClick={() => handleDeleteUser(row.id)}
-                          style={{
-                            opacity: deletingId === row.id ? 0.5 : 1,
-                            cursor: "pointer",
-                          }}
+                          onClick={() => openDeleteModal("user", row)}
+                          style={{ cursor: "pointer" }}
                         >
                           <MdDelete />
                         </span>
@@ -585,11 +585,8 @@ const filteredDivisions = (Array.isArray(divisions) ? divisions : []).filter(
                         </span>
                         <span
                           className={styles.delete}
-                          onClick={() => handleDeleteDivision(row.id)}
-                          style={{
-                            opacity: deletingDivisionId === row.id ? 0.5 : 1,
-                            cursor: "pointer",
-                          }}
+                          onClick={() => openDeleteModal("division", row)}
+                          style={{ cursor: "pointer" }}
                         >
                           <MdDelete />
                         </span>
@@ -699,6 +696,15 @@ const filteredDivisions = (Array.isArray(divisions) ? divisions : []).filter(
           </div>
         )}
       </div>
+
+      {isDeleteModalOpen && (
+        <DeleteConfirmModal
+          onClose={closeDeleteModal}
+          onConfirm={handleConfirmDelete}
+          itemName={deleteItemName}
+          itemLabel={deleteItemLabel}
+        />
+      )}
     </>
   );
 };

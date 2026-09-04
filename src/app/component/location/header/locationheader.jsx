@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import styles from "./locationheader.module.css";
 import { FaUser } from "react-icons/fa";
@@ -10,10 +10,15 @@ import Image from "next/image";
 // context higher up the tree) to skip the fetch below entirely.
 const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(isAdminProp ?? false);
   const menuRef = useRef(null);
+
+  // Fall back to detecting the active tab from the URL when the caller
+  // didn't explicitly pass one (e.g. standalone pages like /dashboard).
+  const resolvedActiveTab = activeTab ?? (pathname === "/dashboard" ? "dashboard" : undefined);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -116,21 +121,21 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
       <div className={styles.section}> 
         {isAdmin && (
           <div
-            className={`${styles.button2} ${activeTab === "dashboard" ? styles.active : ""}`}
+            className={`${styles.button2} ${resolvedActiveTab === "dashboard" ? styles.active : ""}`}
             onClick={goToDashboard}
           >
             Dashboard
           </div>
         )}
         <div
-          className={`${styles.button2} ${activeTab === "location" ? styles.active : ""}`}
+          className={`${styles.button2} ${resolvedActiveTab === "location" ? styles.active : ""}`}
           onClick={goToLocationTab}
         >
           Locations
         </div> 
         {isAdmin && (
           <div
-            className={`${styles.button2} ${activeTab === "divisions" ? styles.active : ""}`}
+            className={`${styles.button2} ${resolvedActiveTab === "divisions" ? styles.active : ""}`}
             onClick={goToDivisionTab}
           >
             Divisions
@@ -139,7 +144,7 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
 
         {isAdmin && (
           <div
-            className={`${styles.button2} ${activeTab === "users" ? styles.active : ""}`}
+            className={`${styles.button2} ${resolvedActiveTab === "users" ? styles.active : ""}`}
             onClick={goToUsersTab}
           >
             Users
@@ -149,7 +154,7 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
         {isAdmin && (
           <div
             className={`${styles.button2} ${
-              activeTab === "activitylog" ? styles.active : ""
+              resolvedActiveTab === "activitylog" ? styles.active : ""
             }`}
             onClick={goToActivityLogTab}
           >
