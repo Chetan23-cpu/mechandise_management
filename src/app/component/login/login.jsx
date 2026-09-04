@@ -110,9 +110,6 @@ const Login = () => {
       <div className={styles.head1}>Merchandise and Asset Management System</div>
       </div>
     <div className={styles.main}>
-      <div className={styles.image}>
-        <Image src="/images/login.jpg" alt="Company logo" width={700} height={400} />
-      </div>
 
       <div style={{ perspective: 1200 }}>
         <AnimatePresence mode="wait">
