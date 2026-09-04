@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate": "knex migrate:latest"
   },
   "dependencies": {
     "axios": "^1.18.1",
