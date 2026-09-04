@@ -9,7 +9,7 @@
 }
 
 .card{
-    width: 420px;
+    width: 620px;
     max-width: 90vw;
     border-radius: 12px;
     overflow: hidden;
@@ -45,6 +45,7 @@
 .section{
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -52,6 +53,12 @@
     padding: 5px 20px;
     font-size: 15px;
     font-weight: 600;
+    row-gap: 4px;
+}
+
+.section label{
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .modallabel{
@@ -65,8 +72,19 @@
     border-radius: 10px;
     outline: none;
     flex: 1;
-    max-width: 200px;
+    max-width: 280px;
     margin-left: 20px;
+}
+
+.imageInput{
+    padding: 6px 8px;
+    border: 0.5px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    flex: 1;
+    max-width: 180px;
+    margin-left: 12px;
+    font-size: 12px;
 }
 
 .buttondiv{
@@ -114,8 +132,28 @@
 }
 
 .fielderror{
+    flex-basis: 100%;
+    width: 100%;
     color: #de0a26;
     font-size: 12px;
-    margin: -6px 0 4px 200px;
-    text-align: left;
+    margin: 0;
+    text-align: right;
+}
+
+.helperText{
+    flex-basis: 100%;
+    width: 100%;
+    color: #777;
+    font-size: 12px;
+    margin: 0;
+    text-align: right;
+}
+
+.imagePreviewWrapper{
+    flex-basis: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: 6px;
 }

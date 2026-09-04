@@ -1,0 +1,53 @@
+
+
+.card{
+    height: 300px;
+    border-radius: 10px;
+    background: linear-gradient(to bottom, #e8fbfa, #7edcd4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.title{
+    display: flex;
+    flex-direction: row;
+    padding: 10px 20px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.heading{
+    color: black;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.button{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.button{
+   font-size: 12px;
+  
+}
+
+.monthly, .quaterly, .yearly{
+      padding: 5px 10px;
+      color: black;
+      cursor: pointer;
+      border-radius: 10px;
+      background: linear-gradient(to bottom, #e8f8ec, #8ae0a0);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.15s ease;
+}
+
+.monthly:hover, .quaterly:hover, .yearly:hover{
+    transform: scale(1.12);
+}
+
+.monthly:active, .quaterly:active, .yearly:active{
+    transform: scale(0.95);
+}

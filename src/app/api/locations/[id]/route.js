@@ -2,6 +2,16 @@ import db from "@/lib/db";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/logActivity";
 
+const parseDivisions = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    try {
+        return JSON.parse(value);
+    } catch {
+        return [];
+    }
+};
+
 export async function PUT(request, { params }) {
     try {
         const { id } = await params;
@@ -11,36 +21,62 @@ export async function PUT(request, { params }) {
         }
 
         const body = await request.json();
-        const { name, email, remarks } = body;
+        const { name, email, remarks, divisions } = body;
 
         if (!name || name.trim() === "") {
             return NextResponse.json({ error: "Location name is required" }, { status: 400 });
         }
 
-        const existingLocation = await db("locations").where({ id }).first();
-        if (!existingLocation) {
+        if (!remarks || remarks.trim() === "") {
+            return NextResponse.json({ error: "Reason for change is required" }, { status: 400 });
+        }
+
+        const existingLocationRaw = await db("locations").where({ id }).first();
+        if (!existingLocationRaw) {
             return NextResponse.json({ error: "Location not found" }, { status: 404 });
         }
 
+        const existingLocation = {
+            ...existingLocationRaw,
+            divisions: parseDivisions(existingLocationRaw.divisions),
+        };
+
+        const divisionIds = Array.isArray(divisions)
+            ? divisions
+            : existingLocation.divisions;
+
         const updatePayload = {
             name: name.trim(),
+            divisions: JSON.stringify(divisionIds),
         };
 
         await db("locations").where({ id }).update(updatePayload);
 
-        const updatedLocation = await db("locations").where({ id }).first();
+        const updatedLocationRaw = await db("locations").where({ id }).first();
+        const updatedLocation = {
+            ...updatedLocationRaw,
+            divisions: parseDivisions(updatedLocationRaw.divisions),
+        };
 
         const changes = [];
         if (existingLocation.name !== updatedLocation.name) {
             changes.push(`name: ${existingLocation.name} → ${updatedLocation.name}`);
         }
+
+        const existingDivisionsText = existingLocation.divisions.slice().sort().join(",");
+        const updatedDivisionsText = updatedLocation.divisions.slice().sort().join(",");
+        if (existingDivisionsText !== updatedDivisionsText) {
+            changes.push(
+                `divisions: [${existingLocation.divisions.join(", ")}] → [${updatedLocation.divisions.join(", ")}]`,
+            );
+        }
+
         const changesText = changes.length > 0 ? ` — ${changes.join(", ")}` : "";
-        const reasonText = remarks && remarks.trim() ? ` (reason: ${remarks.trim()})` : "";
 
         await logActivity({
             email: email || "unknown",
             action: "Location Updated",
-            comment: `Updated location "${existingLocation.name}"${changesText}${reasonText}`,
+            comment: `Updated location "${existingLocation.name}"${changesText}. Reason: ${remarks.trim()}`,
             locationId: updatedLocation.id,
         });
 

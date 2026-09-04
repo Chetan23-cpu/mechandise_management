@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./css/main.module.css";
@@ -7,12 +7,12 @@ import { FaBoxOpen } from "react-icons/fa";
 import { FcReuse } from "react-icons/fc";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { RxActivityLog } from "react-icons/rx";
-import { FaUsers } from "react-icons/fa"; 
+import { FaUsers } from "react-icons/fa";
 import Merchandise from "./mechandise";
 import Reusable from "./reusable";
 import PendingRequest from "./pendingRequest";
 import ActivityLog from "./activitylog";
-import Users from "./users"; 
+import Users from "./users";
 import Print from "./print_pos.jsx";
 
 const AssetMain = () => {
@@ -20,6 +20,25 @@ const AssetMain = () => {
   const searchParams = useSearchParams();
   const locationId = searchParams.get("locationId");
   const locationName = searchParams.get("locationName");
+
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const fetchPendingCount = async () => {
+    try {
+      const params = new URLSearchParams({ status: "pending", limit: "1" });
+      if (locationId) params.set("locationId", locationId);
+
+      const res = await fetch(`/api/pending-requests?${params.toString()}`);
+      const data = await res.json();
+      setPendingCount(Number(data.total) || 0);
+    } catch (err) {
+      console.error("Failed to fetch pending count", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, [locationId]);
 
   return (
     <div className={styles.main}>
@@ -33,7 +52,8 @@ const AssetMain = () => {
         </div>
         <div
           className={`${styles.section} ${activeSection === "print" ? styles.active : ""}`}
-          onClick={() => setActiveSection("print")}>
+          onClick={() => setActiveSection("print")}
+        >
           <h2>Print & POS</h2>
         </div>
 
@@ -50,7 +70,10 @@ const AssetMain = () => {
           onClick={() => setActiveSection("pending")}
         >
           <MdOutlinePendingActions className={styles.request} />
-          <h2>Pending Request</h2>
+          <h2>
+            Pending Request{" "}
+            <span className={styles.pending}>({pendingCount})</span>
+          </h2>
         </div>
 
         <div
@@ -70,12 +93,12 @@ const AssetMain = () => {
         </div>
       </div>
 
-      <AnimatePresence mode="wait"> 
+      <AnimatePresence mode="wait">
         <motion.div
           key={activeSection}
           initial={{ opacity: 0, y: -40 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -40 }}
+          exit={{ opacity: 0, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
           {activeSection === "merchandise" && (
@@ -85,12 +108,20 @@ const AssetMain = () => {
             <Reusable locationId={locationId} locationName={locationName} />
           )}
           {activeSection === "print" && (
-            <Print locationId={locationId} locationName={locationName}/>
+            <Print locationId={locationId} locationName={locationName} />
           )}
-          {activeSection === "pending" && <PendingRequest locationId={locationId} />}
-          {activeSection === "activity" && <ActivityLog locationId={locationId} />}
+          {activeSection === "pending" && (
+            <PendingRequest
+              locationId={locationId}
+              onStatusChanged={fetchPendingCount}
+            />
+          )}
+          {activeSection === "activity" && (
+            <ActivityLog locationId={locationId} />
+          )}
           {activeSection === "users" && (
-            <Users locationId={locationId} locationName={locationName}/>)}
+            <Users locationId={locationId} locationName={locationName} />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

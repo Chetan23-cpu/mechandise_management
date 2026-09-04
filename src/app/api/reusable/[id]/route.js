@@ -16,7 +16,7 @@ export async function PUT(request, { params }) {
     }
 
     const body = await request.json();
-    const { itemCode, name, shelfLocation, reason, email, image } = body;
+    const { itemCode, name, shelfLocation, divisionId, reason, email, image } = body;
 
     if (!itemCode || itemCode.trim() === "") {
       return NextResponse.json(
@@ -50,6 +50,12 @@ export async function PUT(request, { params }) {
       name: name.trim(),
       shelf_location: shelfLocation.trim(),
     };
+
+    // divisionId is optional on update — only touch the column if the
+    // caller explicitly sent the field (present, even if null/empty)
+    if (Object.prototype.hasOwnProperty.call(body, "divisionId")) {
+      updatePayload.divisions = divisionId ? divisionId.toString() : null;
+    }
 
     // image handling:
     // - key absent from body  -> leave existing image untouched
@@ -85,6 +91,18 @@ export async function PUT(request, { params }) {
       .first();
     const locationName = locationRow?.name || existingAsset.location;
 
+    // Resolve human-readable division names (before/after) for the log
+    const [existingDivisionRow, updatedDivisionRow] = await Promise.all([
+      existingAsset.divisions
+        ? db("divisions").where({ id: existingAsset.divisions }).first()
+        : null,
+      updatedAsset.divisions
+        ? db("divisions").where({ id: updatedAsset.divisions }).first()
+        : null,
+    ]);
+    const existingDivisionName = existingDivisionRow?.name || existingAsset.divisions || "—";
+    const updatedDivisionName = updatedDivisionRow?.name || updatedAsset.divisions || "—";
+
     const changes = [];
 
     if (existingAsset.itemCode !== updatePayload.itemCode) {
@@ -92,6 +110,9 @@ export async function PUT(request, { params }) {
     }
     if (existingAsset.name !== updatePayload.name) {
       changes.push(`name: ${existingAsset.name} → ${updatePayload.name}`);
+    }
+    if (String(existingAsset.divisions || "") !== String(updatedAsset.divisions || "")) {
+      changes.push(`division: ${existingDivisionName} → ${updatedDivisionName}`);
     }
     if (imageChanged) {
       changes.push(`image: ${updatedAsset.image ? "updated" : "removed"}`);

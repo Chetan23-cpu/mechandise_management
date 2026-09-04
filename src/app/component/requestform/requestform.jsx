@@ -18,7 +18,11 @@ const RequestForm = () => {
   const [locationId, setLocationId] = useState("");
   const [loadingLocations, setLoadingLocations] = useState(true);
 
-  const [productType, setProductType] = useState(""); // "merchandise" | "reusable"
+  const [availableDivisions, setAvailableDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
+  const [divisionId, setDivisionId] = useState("");
+
+  const [productType, setProductType] = useState(""); // "merchandise" | "reusable" | "print_pos"
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
@@ -53,13 +57,48 @@ const RequestForm = () => {
     fetchLocations();
   }, []);
 
-  // location changed — type, product, and "request to" selections are stale, reset everything downstream
+  // location changed — division, type, product, and "request to" selections
+  // are stale, reset everything downstream
   useEffect(() => {
+    setDivisionId("");
+    setAvailableDivisions([]);
     setProductType("");
     setProducts([]);
     setRows([emptyRow()]);
     setUsers([]);
     setRequestedTo("");
+  }, [locationId]);
+
+  // location changed — fetch divisions assigned to that location
+  useEffect(() => {
+    if (!locationId) {
+      setAvailableDivisions([]);
+      setLoadingDivisions(false);
+      return;
+    }
+
+    setLoadingDivisions(true);
+
+    Promise.all([
+      fetch("/api/locations").then((res) => res.json()),
+      fetch("/api/divisions").then((res) => res.json()),
+    ])
+      .then(([locationsData, divisionsData]) => {
+        const allLocations = Array.isArray(locationsData) ? locationsData : [];
+        const allDivisions = Array.isArray(divisionsData) ? divisionsData : [];
+
+        const currentLocation = allLocations.find(
+          (loc) => String(loc.id) === String(locationId),
+        );
+        const assignedIds = Array.isArray(currentLocation?.divisions)
+          ? currentLocation.divisions
+          : [];
+
+        const scoped = allDivisions.filter((d) => assignedIds.includes(d.id));
+        setAvailableDivisions(scoped);
+      })
+      .catch((err) => console.error("Failed to fetch divisions", err))
+      .finally(() => setLoadingDivisions(false));
   }, [locationId]);
 
   // location changed — fetch users at that location for the "Request to" dropdown
@@ -90,7 +129,7 @@ const RequestForm = () => {
     fetchUsers();
   }, [locationId]);
 
-  // type changed — fetch the product list once, shared across all rows
+  // type, division, or location changed — fetch the product list once, shared across all rows
   useEffect(() => {
     if (!locationId || !productType) {
       setProducts([]);
@@ -106,9 +145,13 @@ const RequestForm = () => {
           : emptyRow(),
       ]);
       try {
-        const res = await fetch(
-          `/api/requestform?locationId=${locationId}&type=${productType}`,
-        );
+        const params = new URLSearchParams({
+          locationId,
+          type: productType,
+        });
+        if (divisionId) params.set("divisionId", divisionId);
+
+        const res = await fetch(`/api/requestform?${params.toString()}`);
         const data = await res.json();
         setProducts(data);
       } catch (err) {
@@ -120,10 +163,10 @@ const RequestForm = () => {
     };
 
     fetchProducts();
-  }, [locationId, productType]);
+  }, [locationId, productType, divisionId]);
 
   // look up a product's available stock for the current type ("quantity"
-  // is only populated for merchandise right now — reusables don't carry
+  // is populated for merchandise and print_pos — reusables don't carry
   // a confirmed stock column, so this returns null for them)
   const getAvailableQuantity = (productId) => {
     if (!productId) return null;
@@ -131,7 +174,7 @@ const RequestForm = () => {
       (p) => String(p.id) === String(productId),
     );
     if (!product) return null;
-    if (productType !== "merchandise") return null;
+    if (productType !== "merchandise" && productType !== "print_pos") return null;
     return product.quantity ?? null;
   };
 
@@ -164,6 +207,8 @@ const RequestForm = () => {
     setName("");
     setEmail("");
     setLocationId("");
+    setDivisionId("");
+    setAvailableDivisions([]);
     setProductType("");
     setProducts([]);
     setUsers([]);
@@ -184,8 +229,12 @@ const RequestForm = () => {
       setError("Name, email, location, request to, and reason are required");
       return;
     }
+    if (availableDivisions.length > 0 && !divisionId) {
+      setError("Please select a division");
+      return;
+    }
     if (!productType) {
-      setError("Select Merchandise or Reusable");
+      setError("Select Merchandise, Reusable, or Print & POS");
       return;
     }
 
@@ -211,6 +260,7 @@ const RequestForm = () => {
           name: name.trim(),
           email: email.trim(),
           locationId,
+          divisionId: divisionId || null,
           requestedTo,
           reason: reason.trim(),
           items: rows.map((row) => ({
@@ -303,6 +353,32 @@ const RequestForm = () => {
               ))}
             </select>
           </div>
+
+          <div className={styles.section}>
+            <label>Division</label>
+            <select
+              value={divisionId}
+              onChange={(e) => setDivisionId(e.target.value)}
+              className={styles.input}
+              disabled={!locationId || loadingDivisions || availableDivisions.length === 0}
+            >
+              <option value="">
+                {!locationId
+                  ? "Select a location first"
+                  : loadingDivisions
+                  ? "Loading divisions..."
+                  : availableDivisions.length === 0
+                  ? "No divisions assigned to this location"
+                  : "Select Division"}
+              </option>
+              {availableDivisions.map((division) => (
+                <option key={division.id} value={division.id}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className={styles.section}>
             <label>Request to</label>
             <select
@@ -323,7 +399,7 @@ const RequestForm = () => {
           </div>
 
           <div className={styles.section}>
-            <label>Merchandise/Reusable</label>
+            <label>Product Type</label>
             <select
               value={productType}
               onChange={(e) => setProductType(e.target.value)}
@@ -333,6 +409,7 @@ const RequestForm = () => {
               <option value="">Please Select</option>
               <option value="merchandise">Merchandise</option>
               <option value="reusable">Reusable</option>
+              <option value="print_pos">Print & POS</option>
             </select>
           </div>
 

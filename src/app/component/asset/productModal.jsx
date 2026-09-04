@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import styles from "./css/productModal.module.css";
 import { useState, useEffect } from "react";
 
@@ -9,11 +9,16 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
   const [name, setName] = useState("");
   const [selfLocation, setSelfLocation] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [image, setImage] = useState(""); // base64 data URL
+  const [minquantity, setMinQuantity] = useState("");
+  const [image, setImage] = useState(""); 
   const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [currentEmail, setCurrentEmail] = useState("");
+  const [currentEmail, setCurrentEmail] = useState(""); 
+
+  const [availableDivisions, setAvailableDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(true);
+  const [divisionId, setDivisionId] = useState("");
 
   useEffect(() => {
     fetch("/api/me")
@@ -22,13 +27,47 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
       .catch((err) => console.error("Failed to fetch current user", err));
   }, []);
 
+  useEffect(() => {
+    if (!locationId) {
+      setAvailableDivisions([]);
+      setLoadingDivisions(false);
+      return;
+    }
+
+    setLoadingDivisions(true);
+
+    Promise.all([
+      fetch("/api/locations").then((res) => res.json()),
+      fetch("/api/divisions").then((res) => res.json()),
+    ])
+      .then(([locationsData, divisionsData]) => {
+        const locations = Array.isArray(locationsData) ? locationsData : [];
+        const allDivisions = Array.isArray(divisionsData) ? divisionsData : [];
+
+        const currentLocation = locations.find(
+          (loc) => String(loc.id) === String(locationId),
+        );
+        const assignedIds = Array.isArray(currentLocation?.divisions)
+          ? currentLocation.divisions
+          : [];
+
+        const scoped = allDivisions.filter((d) => assignedIds.includes(d.id));
+        setAvailableDivisions(scoped);
+      })
+      .catch((err) => console.error("Failed to fetch divisions", err))
+      .finally(() => setLoadingDivisions(false));
+  }, [locationId]);
+
   const validate = () => {
     const newErrors = {};
     if (!itemCode.trim()) newErrors.itemCode = "Please enter Item Code";
     if (!name.trim()) newErrors.name = "Please enter product name";
     if (!selfLocation.trim()) newErrors.selfLocation = "Please enter shelf location";
     if (!quantity.trim()) newErrors.quantity = "Please enter quantity";
+    if (!minquantity.trim()) newErrors.minquantity = "Please enter min quantity";
     if (!locationId) newErrors.location = "No location selected";
+    if (availableDivisions.length > 0 && !divisionId)
+      newErrors.division = "Please select a division";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -90,7 +129,9 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
           name,
           selfLocation,
           quantity,
+          minquantity,
           location: locationId,
+          divisionId: divisionId || null,
           email: currentEmail,
           image, // base64 data URL, or "" if none selected
         }),
@@ -126,8 +167,8 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 value={itemCode}
                 onChange={(e) => setItemCode(e.target.value)}
               />
+              {errors.itemCode && <p className={styles.fielderror}>{errors.itemCode}</p>}
             </div>
-            {errors.itemCode && <p className={styles.fielderror}>{errors.itemCode}</p>}
 
             <div className={styles.section}>
               <label>Item Name</label>
@@ -137,8 +178,8 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              {errors.name && <p className={styles.fielderror}>{errors.name}</p>}
             </div>
-            {errors.name && <p className={styles.fielderror}>{errors.name}</p>}
 
             <div className={styles.section}>
               <label>Shelf Location</label>
@@ -148,8 +189,8 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 value={selfLocation}
                 onChange={(e) => setSelfLocation(e.target.value)}
               />
+              {errors.selfLocation && <p className={styles.fielderror}>{errors.selfLocation}</p>}
             </div>
-            {errors.selfLocation && <p className={styles.fielderror}>{errors.selfLocation}</p>}
 
             <div className={styles.section}>
               <label>Quantity</label>
@@ -159,8 +200,44 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
               />
+              {errors.quantity && <p className={styles.fielderror}>{errors.quantity}</p>}
             </div>
-            {errors.quantity && <p className={styles.fielderror}>{errors.quantity}</p>}
+
+            <div className={styles.section}>
+              <label>Min Quantity</label>
+              <input
+                placeholder="Enter Min Quantity"
+                className={styles.modalinput}
+                value={minquantity}
+                onChange={(e) => setMinQuantity(e.target.value)}
+              />
+              {errors.minquantity && <p className={styles.fielderror}>{errors.minquantity}</p>}
+            </div>
+
+            <div className={styles.section}>
+              <label>Division</label>
+              {loadingDivisions ? (
+                <p className={styles.helperText}>Loading divisions...</p>
+              ) : availableDivisions.length === 0 ? (
+                <p className={styles.helperText}>
+                  No divisions assigned to this location
+                </p>
+              ) : (
+                <select
+                  className={styles.modalinput}
+                  value={divisionId}
+                  onChange={(e) => setDivisionId(e.target.value)}
+                >
+                  <option value="">Select a division</option>
+                  {availableDivisions.map((division) => (
+                    <option key={division.id} value={division.id}>
+                      {division.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.division && <p className={styles.fielderror}>{errors.division}</p>}
+            </div>
 
             <div className={styles.section}>
               <label>Product Image (max 200KB)</label>
@@ -170,28 +247,28 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 className={styles.modalinput}
                 onChange={handleImageChange}
               />
+              {imagePreview && (
+                <div className={styles.imagePreviewWrapper}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: "120px",
+                      maxHeight: "120px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />
+                  <p
+                    onClick={handleRemoveImage}
+                    style={{ cursor: "pointer", color: "#c00", fontSize: "12px", marginTop: "4px" }}
+                  >
+                    Remove image
+                  </p>
+                </div>
+              )}
+              {errors.image && <p className={styles.fielderror}>{errors.image}</p>}
             </div>
-            {imagePreview && (
-              <div className={styles.section}>
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{
-                    maxWidth: "120px",
-                    maxHeight: "120px",
-                    objectFit: "cover",
-                    borderRadius: "6px",
-                  }}
-                />
-                <p
-                  onClick={handleRemoveImage}
-                  style={{ cursor: "pointer", color: "#c00", fontSize: "12px", marginTop: "4px" }}
-                >
-                  Remove image
-                </p>
-              </div>
-            )}
-            {errors.image && <p className={styles.fielderror}>{errors.image}</p>}
 
             <div className={styles.section}>
               <label>Location</label>
@@ -201,8 +278,8 @@ const ProductAddModal = ({ onClose, onMerchandiseAdded, locationId, locationName
                 disabled
                 readOnly
               />
+              {errors.location && <p className={styles.fielderror}>{errors.location}</p>}
             </div>
-            {errors.location && <p className={styles.fielderror}>{errors.location}</p>}
 
             {errors.form && <p className={styles.fielderror}>{errors.form}</p>}
           </div>

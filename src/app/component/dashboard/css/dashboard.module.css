@@ -1,0 +1,23 @@
+.main{
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+}
+
+.toprow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  padding: 30px 50px;
+  align-items: center;
+}
+
+.secondrow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+  padding: 30px 50px;
+  align-items: center;
+}

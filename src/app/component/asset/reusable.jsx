@@ -31,6 +31,7 @@ const Reusable = ({ locationId, locationName }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [divisions, setDivisions] = useState([]);
   const limit = 10;
 
   const handleAssetCheckedOut = (updatedAsset) => {
@@ -75,6 +76,19 @@ const Reusable = ({ locationId, locationName }) => {
   useEffect(() => {
     setCurrentPage(1);
   }, [locationId]);
+
+  useEffect(() => {
+    fetch("/api/divisions")
+      .then((res) => res.json())
+      .then((data) => setDivisions(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Failed to fetch divisions", err));
+  }, []);
+
+  const getDivisionName = (divisionId) => {
+    if (!divisionId || !Array.isArray(divisions)) return "—";
+    const division = divisions.find((d) => String(d.id) === String(divisionId));
+    return division?.name || "—";
+  };
 
   const handleReusableAdded = (newItem) => {
     setStockData((prev) => [...prev, newItem]);
@@ -150,11 +164,12 @@ const Reusable = ({ locationId, locationName }) => {
 
       autoTable(doc, {
         startY: searchTerm.trim() ? 28 : 22,
-        head: [["S.No", "Item Code", "Asset Name", "Status", "Shelf Location"]],
+        head: [["S.No", "Item Code", "Asset Name", "Division", "Status", "Shelf Location"]],
         body: allRows.map((row, index) => [
           index + 1,
           row.itemCode,
           row.name,
+          getDivisionName(row.divisions),
           row.status,
           row.status === "Checked Out"
             ? row.checkedout_email || "—"
@@ -220,6 +235,7 @@ const Reusable = ({ locationId, locationName }) => {
             <th className={styles.head}>Image</th>
             <th className={styles.head}>Item Code</th>
             <th className={styles.head}>Asset Name</th>
+            <th className={styles.head}>Division</th>
             <th className={styles.head}>Status</th>
             <th className={styles.head}>Shelf Location</th>
             <th className={styles.head}>Action</th>
@@ -228,11 +244,11 @@ const Reusable = ({ locationId, locationName }) => {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="7">Loading...</td>
+              <td colSpan="8">Loading...</td>
             </tr>
           ) : stockData.length === 0 ? (
             <tr>
-              <td colSpan="7">No reusable assets found for this location.</td>
+              <td colSpan="8">No reusable assets found for this location.</td>
             </tr>
           ) : (
             stockData.map((row, index) => (
@@ -253,6 +269,7 @@ const Reusable = ({ locationId, locationName }) => {
                 </td>
                 <td>{row.itemCode}</td>
                 <td>{row.name}</td>
+                <td>{getDivisionName(row.divisions)}</td>
                 <td>{row.status}</td>
                 <td>
                   {row.status === "Checked Out"

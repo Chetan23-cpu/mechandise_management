@@ -11,6 +11,8 @@ import UserAddModal from "../../asset/addUserModal";
 import UserEditModal from "../../asset/editUserModal";
 import LocationHeader from "../header/locationheader";
 import LocationEditModal from "./locationeditModal";
+import AddDivision from "./divisionAddModal";
+import DivisionEditModal from "./divisionEditModal";
 
 const Locationfields = () => {
   const [activeTab, setActiveTab] = useState("location");
@@ -41,6 +43,13 @@ const Locationfields = () => {
   const [currentEmail, setCurrentEmail] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoaded, setIsAdminLoaded] = useState(false);
+
+  const [isAddDivisionModal, setAddDivisionModal] = useState(false);
+  const [divisions, setDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(true);
+  const [selectedDivision, setSelectedDivision] = useState(null);
+  const [isDivisionEditModal, setDivisionEditModal] = useState(false);
+  const [deletingDivisionId, setDeletingDivisionId] = useState(null);
 
   useEffect(() => {
     fetch("/api/me")
@@ -81,6 +90,15 @@ const Locationfields = () => {
       .filter(Boolean)
       .join(", ");
   };
+  const getLocationsForDivision = (divisionId) => {
+  if (!Array.isArray(locations) || locations.length === 0) return "—";
+
+  const matching = locations
+    .filter((loc) => Array.isArray(loc.divisions) && loc.divisions.includes(divisionId))
+    .map((loc) => loc.name);
+
+  return matching.length > 0 ? matching.join(", ") : "—";
+};
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -103,6 +121,27 @@ const Locationfields = () => {
     }
   };
 
+  const fetchDivisions = async () => {
+    setLoadingDivisions(true);
+    try {
+      const res = await fetch("/api/divisions");
+      const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data)) {
+        console.error("Failed to fetch divisions", data?.error || data);
+        setDivisions([]);
+        return;
+      }
+
+      setDivisions(data);
+    } catch (err) {
+      console.error("Failed to fetch divisions", err);
+      setDivisions([]);
+    } finally {
+      setLoadingDivisions(false);
+    }
+  };
+
   useEffect(() => {
     fetchLocations();
   }, []);
@@ -115,6 +154,17 @@ const Locationfields = () => {
     } else {
       setUsers([]);
       setLoadingUsers(false);
+    }
+  }, [isAdmin, isAdminLoaded]);
+
+  // only fetch the admin-only divisions list once we know the user is admin
+  useEffect(() => {
+    if (!isAdminLoaded) return;
+    if (isAdmin) {
+      fetchDivisions();
+    } else {
+      setDivisions([]);
+      setLoadingDivisions(false);
     }
   }, [isAdmin, isAdminLoaded]);
 
@@ -165,6 +215,42 @@ const Locationfields = () => {
     );
   };
 
+  const handleDivisionAdded = (newDivision) => {
+    setDivisions((prev) => [...prev, newDivision]);
+  };
+
+  const handleDivisionUpdated = (updatedDivision) => {
+    setDivisions((prev) =>
+      prev.map((d) => (d.id === updatedDivision.id ? updatedDivision : d)),
+    );
+  };
+
+  const closeDivisionEditModal = () => {
+    setDivisionEditModal(false);
+    setSelectedDivision(null);
+  };
+
+  const handleDeleteDivision = async (id) => {
+    if (!confirm("Are you sure you want to delete this division?")) return;
+
+    try {
+      setDeletingDivisionId(id);
+      const res = await fetch(`/api/divisions/${id}`, { method: "DELETE" });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete division");
+      }
+
+      setDivisions((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      console.error("Failed to delete division", err);
+      alert(err.message || "Failed to delete division");
+    } finally {
+      setDeletingDivisionId(null);
+    }
+  };
+
   const handleUserAdded = (newUser) => {
     setUsers((prev) => [...prev, newUser]);
   };
@@ -200,6 +286,7 @@ const Locationfields = () => {
       setDeletingId(null);
     }
   };
+
   useEffect(() => {
     if (activeTab !== "activitylog") return;
     if (!isAdmin) return;
@@ -211,7 +298,7 @@ const Locationfields = () => {
     return () => clearTimeout(timer);
   }, [activitySearchTerm, activeTab, isAdmin]);
 
-  // NEW: filter users by name, email, location access, or admin status
+  // filter users by name, email, location access, or admin status
   const filteredUsers = (Array.isArray(users) ? users : []).filter((u) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
@@ -232,6 +319,15 @@ const Locationfields = () => {
       adminText.includes(term)
     );
   });
+
+  // filter divisions by name
+const filteredDivisions = (Array.isArray(divisions) ? divisions : []).filter(
+  (d) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return d.name?.toLowerCase().includes(term);
+  },
+);
 
   const handleActivitySearch = (value) => {
     setActivitySearchTerm(value);
@@ -433,6 +529,7 @@ const Locationfields = () => {
         {activeTab === "divisions" && isAdmin && (
           <div className={styles.merchandise}>
             <div className={styles.detailhead}>Divisions</div>
+
             <div className={styles.searchsection}>
               <div className={styles.search}>
                 <input
@@ -442,24 +539,81 @@ const Locationfields = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className={styles.add} onClick={() => setAddDivisionModal(true)}>
+
+              <div
+                className={styles.add}
+                onClick={() => setAddDivisionModal(true)}
+              >
                 <IoBagAdd className={styles.bag} />
                 <div className={styles.text}>Add Divisions</div>
               </div>
             </div>
+
             <table className={styles.table}>
               <thead>
                 <tr className={styles.tableheading}>
                   <th className={styles.head}>S.No</th>
-                  <th className={styles.head}>Divisions</th>
-                  <th className={styles.head}>Location</th>
-                  <th className={styles.head}>Action</th>
+                  <th className={styles.head}>Division</th>
+                  <th className={styles.head}>Locations</th>
+                  <th className={styles.head}>Actions</th>
                 </tr>
               </thead>
+              <tbody>
+                {loadingDivisions ? (
+                  <tr>
+                    <td colSpan="4">Loading...</td>
+                  </tr>
+                ) : filteredDivisions.length === 0 ? (
+                  <tr>
+                    <td colSpan="4">No division found.</td>
+                  </tr>
+                ) : (
+                  filteredDivisions.map((row, index) => (
+                    <tr key={row.id} className={styles.tablebody}>
+                      <td>{index + 1}</td>
+                      <td>{row.name}</td>
+                      <td>{getLocationsForDivision(row.id)}</td>
+                      <td className={styles.button4}>
+                        <span
+                          className={styles.edit}
+                          onClick={() => {
+                            setSelectedDivision(row);
+                            setDivisionEditModal(true);
+                          }}
+                        >
+                          <MdModeEditOutline />
+                        </span>
+                        <span
+                          className={styles.delete}
+                          onClick={() => handleDeleteDivision(row.id)}
+                          style={{
+                            opacity: deletingDivisionId === row.id ? 0.5 : 1,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <MdDelete />
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
             </table>
-            <tbody>
-              
-            </tbody>
+
+            {isAddDivisionModal && (
+              <AddDivision
+                onClose={() => setAddDivisionModal(false)}
+                onDivisionAdded={handleDivisionAdded}
+              />
+            )}
+
+            {isDivisionEditModal && (
+              <DivisionEditModal
+                onClose={closeDivisionEditModal}
+                onUpdate={handleDivisionUpdated}
+                division={selectedDivision}
+              />
+            )}
           </div>
         )}
 

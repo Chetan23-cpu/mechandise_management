@@ -15,7 +15,6 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
   const [isAdmin, setIsAdmin] = useState(isAdminProp ?? false);
   const menuRef = useRef(null);
 
-  // close the dropdown when clicking anywhere outside it
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -26,7 +25,6 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // if the caller didn't pass isAdmin directly, fetch the current user
   useEffect(() => {
     if (isAdminProp !== undefined) return;
 
@@ -62,7 +60,7 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     if (onTabChange) {
       onTabChange("location");
     } else {
-      router.push("/");
+      router.push("/location");
     }
   };
 
@@ -74,7 +72,7 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     if (onTabChange) {
       onTabChange("users");
     } else {
-      router.push("/?tab=users");
+      router.push("/location?tab=users");
     }
   };
 
@@ -86,9 +84,17 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     if (onTabChange) {
       onTabChange("divisions");
     } else{
-      router.push("/?tab=divisions");
+      router.push("/location?tab=divisions");
     }
   }
+
+  const goToDashboard = () => {
+    if (!isAdmin) {
+      router.push("/unauthorized");
+      return;
+    }
+    router.push("/dashboard");
+  };
 
   const goToActivityLogTab = () => {
     if (!isAdmin) {
@@ -98,25 +104,24 @@ const LocationHeader = ({ activeTab, onTabChange, isAdmin: isAdminProp }) => {
     if (onTabChange) {
       onTabChange("activitylog");
     } else {
-      router.push("/?tab=activitylog");
+      router.push("/location?tab=activitylog");
     }
   };
 
   return (
     <div className={styles.main}>
       <div className={styles.imagesec}>
-        {/* <Image
-                  src="/images/logo.png"
-                  alt="Access Denied"
-                  width={65}
-                  height={65} 
-                  style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                  className={styles.image}
-                  onClick={() => router.push("/location")}
-                /> */}
       <div className={styles.head}>Merchandise and Asset Management System</div>
       </div>
       <div className={styles.section}> 
+        {isAdmin && (
+          <div
+            className={`${styles.button2} ${activeTab === "dashboard" ? styles.active : ""}`}
+            onClick={goToDashboard}
+          >
+            Dashboard
+          </div>
+        )}
         <div
           className={`${styles.button2} ${activeTab === "location" ? styles.active : ""}`}
           onClick={goToLocationTab}

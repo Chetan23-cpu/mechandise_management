@@ -13,7 +13,7 @@ export async function PUT(request, { params }) {
         }
 
         const body = await request.json();
-        const { itemCode, name, shelfLocation, quantity, reason, email, image } = body;
+        const { itemCode, name, shelfLocation, quantity, minquantity, divisionId, reason, email, image } = body;
 
         if (!itemCode || itemCode.trim() === "") {
             return NextResponse.json({ error: "Item Code is required" }, { status: 400 });
@@ -26,6 +26,9 @@ export async function PUT(request, { params }) {
         }
         if (!quantity || quantity.toString().trim() === "") {
             return NextResponse.json({ error: "Quantity is required" }, { status: 400 });
+        }
+        if (!minquantity || minquantity.toString().trim() === "") {
+            return NextResponse.json({ error: "Min Quantity is required" }, { status: 400 });
         }
         if (!reason || reason.trim() === "") {
             return NextResponse.json({ error: "Reason is required" }, { status: 400 });
@@ -41,12 +44,24 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ error: "Quantity must be a number" }, { status: 400 });
         }
 
+        const parsedMinQuantity = Number(minquantity);
+        if (Number.isNaN(parsedMinQuantity)) {
+            return NextResponse.json({ error: "Min Quantity must be a number" }, { status: 400 });
+        }
+
         const updatePayload = {
             item_code: itemCode.trim(),
             name: name.trim(),
             shelf_location: shelfLocation.trim(),
             quantity: parsedQuantity,
+            minquantity: parsedMinQuantity,
         };
+
+        // divisionId is optional on update — only touch the column if the
+        // caller explicitly sent the field (present, even if null/empty)
+        if (Object.prototype.hasOwnProperty.call(body, "divisionId")) {
+            updatePayload.divisions = divisionId ? divisionId.toString() : null;
+        }
 
         // image handling:
         // - key absent from body  -> leave existing image untouched
@@ -73,15 +88,52 @@ export async function PUT(request, { params }) {
             }
         }
 
-        await db("merchandises").where({ id }).update(updatePayload);
+        // Quantity diff, used to log the dashboard_data movement
+        const previousQuantity = Number(existingProduct.quantity) || 0;
+        const quantityDiff = parsedQuantity - previousQuantity;
 
-        const updatedMerchandise = await db("merchandises").where({ id }).first();
+        // Resolve user_id from the submitted email up front
+        const userRow = email
+            ? await db("users").where({ email }).first()
+            : null;
+
+        const updatedMerchandise = await db.transaction(async (trx) => {
+            await trx("merchandises").where({ id }).update(updatePayload);
+
+            const merchandise = await trx("merchandises").where({ id }).first();
+
+            if (quantityDiff !== 0) {
+                await trx("dashboard_data").insert({
+                    product_code: merchandise.item_code,
+                    location_id: existingProduct.location,
+                    division_id: merchandise.divisions,
+                    user_id: userRow ? userRow.id.toString() : null,
+                    added_qty: quantityDiff > 0 ? quantityDiff : 0,
+                    removed_qty: quantityDiff < 0 ? Math.abs(quantityDiff) : 0,
+                    product_type: "merchandise",
+                });
+            }
+
+            return merchandise;
+        });
 
         // Resolve human-readable location name
         const locationRow = await db("locations")
             .where({ id: existingProduct.location })
             .first();
         const locationName = locationRow?.name || existingProduct.location;
+
+        // Resolve human-readable division names (before/after) for the log
+        const [existingDivisionRow, updatedDivisionRow] = await Promise.all([
+            existingProduct.divisions
+                ? db("divisions").where({ id: existingProduct.divisions }).first()
+                : null,
+            updatedMerchandise.divisions
+                ? db("divisions").where({ id: updatedMerchandise.divisions }).first()
+                : null,
+        ]);
+        const existingDivisionName = existingDivisionRow?.name || existingProduct.divisions || "—";
+        const updatedDivisionName = updatedDivisionRow?.name || updatedMerchandise.divisions || "—";
 
         // Build a diff — only include fields that actually changed,
         // except shelf location and location which are always shown.
@@ -95,6 +147,12 @@ export async function PUT(request, { params }) {
         }
         if (existingProduct.quantity !== updatedMerchandise.quantity) {
             changes.push(`qty: ${existingProduct.quantity} → ${updatedMerchandise.quantity}`);
+        }
+        if (existingProduct.minquantity !== updatedMerchandise.minquantity) {
+            changes.push(`min qty: ${existingProduct.minquantity} → ${updatedMerchandise.minquantity}`);
+        }
+        if (String(existingProduct.divisions || "") !== String(updatedMerchandise.divisions || "")) {
+            changes.push(`division: ${existingDivisionName} → ${updatedDivisionName}`);
         }
         if (imageChanged) {
             changes.push(`image: ${updatedMerchandise.image ? "updated" : "removed"}`);

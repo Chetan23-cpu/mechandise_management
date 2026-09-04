@@ -23,6 +23,7 @@ const PrintPos = ({ locationId, locationName }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [divisions, setDivisions] = useState();
   const limit = 10;
 
   const fetchPrintPos = async () => {
@@ -68,7 +69,7 @@ const PrintPos = ({ locationId, locationName }) => {
 
   const handlePrintPosUpdated = (updatedItem) => {
     setStockData((prev) =>
-      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item)),
     );
   };
 
@@ -90,7 +91,7 @@ const PrintPos = ({ locationId, locationName }) => {
 
       const res = await fetch(
         `/api/print_pos/${id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!res.ok) {
@@ -128,7 +129,7 @@ const PrintPos = ({ locationId, locationName }) => {
       doc.text(
         `Print & POS Stock${locationName ? ` — ${locationName}` : ""}`,
         14,
-        15
+        15,
       );
       if (searchTerm.trim()) {
         doc.setFontSize(10);
@@ -160,6 +161,19 @@ const PrintPos = ({ locationId, locationName }) => {
       setIsDownloading(false);
     }
   };
+  useEffect(() => {
+    fetch("/api/divisions")
+      .then((res) => res.json())
+      .then((data) => setDivisions(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Failed to fetch divisions", err));
+  }, []);
+  const getDivisionName = (divisionId) => {
+    if (!divisionId) return "—";
+    const division = (divisions || []).find(
+      (d) => String(d.id) === String(divisionId),
+    );
+    return division?.name || "—";
+  };
 
   return (
     <div className={styles.merchandise}>
@@ -178,7 +192,10 @@ const PrintPos = ({ locationId, locationName }) => {
           <div
             className={styles.pdf}
             onClick={isDownloading ? undefined : handleDownloadPdf}
-            style={{ opacity: isDownloading ? 0.6 : 1, cursor: isDownloading ? "default" : "pointer" }}
+            style={{
+              opacity: isDownloading ? 0.6 : 1,
+              cursor: isDownloading ? "default" : "pointer",
+            }}
           >
             <div className={styles.pdficon}>
               <FaFilePdf />
@@ -204,8 +221,10 @@ const PrintPos = ({ locationId, locationName }) => {
             <th className={styles.head}>Image</th>
             <th className={styles.head}>Item Code</th>
             <th className={styles.head}>Item</th>
+            <th className={styles.head}>Division</th>
             <th className={styles.head}>Shelf Location</th>
             <th className={styles.head}>Quantity</th>
+            <th className={styles.head}>Min Quantity</th>
             <th className={styles.head}>Action</th>
           </tr>
         </thead>
@@ -237,8 +256,10 @@ const PrintPos = ({ locationId, locationName }) => {
                 </td>
                 <td>{row.item_code}</td>
                 <td>{row.name}</td>
+                <td>{getDivisionName(row.divisions)}</td>
                 <td>{row.shelf}</td>
                 <td>{row.quantity}</td>
+                <td>{row.minquantity}</td>
                 <td className={styles.button}>
                   <span
                     className={styles.edit}
@@ -252,7 +273,10 @@ const PrintPos = ({ locationId, locationName }) => {
                   <span
                     className={styles.delete}
                     onClick={() => handleDeleteProduct(row.id)}
-                    style={{ opacity: deletingId === row.id ? 0.5 : 1, cursor: "pointer" }}
+                    style={{
+                      opacity: deletingId === row.id ? 0.5 : 1,
+                      cursor: "pointer",
+                    }}
                   >
                     <MdDelete />
                   </span>

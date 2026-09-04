@@ -162,8 +162,8 @@
 }
 
 .card {
-    width: 25%;
-    min-width: 320px;
+    width: 50%;
+    min-width: 420px;
     height: 30vh;
     display: flex;
     flex-direction: column;
@@ -202,10 +202,12 @@
     background-color: aliceblue;
     color: black;
     display: flex;
-    flex-direction: column;
-    padding: 40px 0;
+    flex-direction: row;
+    padding: 10px 20px;
+    margin-top: 10px;
     text-align: center;
     align-items: center;
+    gap: 20px;
 }
 
 .buttondiv{
@@ -223,6 +225,7 @@
 
 .modallabel{
     font-size: 18px;
+    font-weight: 600;
 }
 .modalinput{
     margin-left: 20px;
@@ -558,4 +561,29 @@
 .pagination {
   overflow: hidden;
   width: 100%;
+}
+
+.divisionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.divisionOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.helperText {
+  font-size: 13px;
+}
+
+.errorText {
+  color: red;
+  font-size: 13px;
 }

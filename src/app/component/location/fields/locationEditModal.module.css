@@ -148,3 +148,22 @@
   background: #de0a26;
   transform: translateY(-1px);
 }
+.divisionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.divisionOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.helperText {
+  font-size: 13px;
+}

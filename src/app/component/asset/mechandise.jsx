@@ -23,6 +23,8 @@ const Merchandise = ({ locationId, locationName }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [divisions, setDivisions] = useState([]);
+
   const limit = 10;
 
   const fetchMerchandise = async () => {
@@ -62,13 +64,20 @@ const Merchandise = ({ locationId, locationName }) => {
     setCurrentPage(1);
   }, [locationId]);
 
+  useEffect(() => {
+    fetch("/api/divisions")
+      .then((res) => res.json())
+      .then((data) => setDivisions(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Failed to fetch divisions", err));
+  }, []);
+
   const handleMerchandiseAdded = (newItem) => {
     setStockData((prev) => [...prev, newItem]);
   };
 
   const handleMerchandiseUpdated = (updatedItem) => {
     setStockData((prev) =>
-      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item)),
     );
   };
 
@@ -90,7 +99,7 @@ const Merchandise = ({ locationId, locationName }) => {
 
       const res = await fetch(
         `/api/merchandises/${id}?email=${encodeURIComponent(email)}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!res.ok) {
@@ -128,7 +137,7 @@ const Merchandise = ({ locationId, locationName }) => {
       doc.text(
         `Merchandise Stock${locationName ? ` — ${locationName}` : ""}`,
         14,
-        15
+        15,
       );
       if (searchTerm.trim()) {
         doc.setFontSize(10);
@@ -161,6 +170,12 @@ const Merchandise = ({ locationId, locationName }) => {
     }
   };
 
+  const getDivisionName = (divisionId) => {
+    if (!divisionId || !Array.isArray(divisions)) return "—";
+    const division = divisions.find((d) => String(d.id) === String(divisionId));
+    return division?.name || "—";
+  };
+
   return (
     <div className={styles.merchandise}>
       <div className={styles.detailhead}>Merchandise Stock</div>
@@ -178,7 +193,10 @@ const Merchandise = ({ locationId, locationName }) => {
           <div
             className={styles.pdf}
             onClick={isDownloading ? undefined : handleDownloadPdf}
-            style={{ opacity: isDownloading ? 0.6 : 1, cursor: isDownloading ? "default" : "pointer" }}
+            style={{
+              opacity: isDownloading ? 0.6 : 1,
+              cursor: isDownloading ? "default" : "pointer",
+            }}
           >
             <div className={styles.pdficon}>
               <FaFilePdf />
@@ -204,19 +222,22 @@ const Merchandise = ({ locationId, locationName }) => {
             <th className={styles.head}>Image</th>
             <th className={styles.head}>Item Code</th>
             <th className={styles.head}>Item</th>
+            <th className={styles.head}>Division</th>
             <th className={styles.head}>Shelf Location</th>
             <th className={styles.head}>Quantity</th>
+            <th className={styles.head}>Min Quantity</th>
+
             <th className={styles.head}>Action</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="7">Loading...</td>
+              <td colSpan="9">Loading...</td>
             </tr>
           ) : stockData.length === 0 ? (
             <tr>
-              <td colSpan="7">No items found for this location.</td>
+              <td colSpan="9">No items found for this location.</td>
             </tr>
           ) : (
             stockData.map((row, index) => (
@@ -237,8 +258,10 @@ const Merchandise = ({ locationId, locationName }) => {
                 </td>
                 <td>{row.item_code}</td>
                 <td>{row.name}</td>
+                <td>{getDivisionName(row.divisions)}</td>
                 <td>{row.shelf_location}</td>
                 <td>{row.quantity}</td>
+                <td>{row.minquantity}</td>
                 <td className={styles.button}>
                   <span
                     className={styles.edit}
@@ -252,7 +275,10 @@ const Merchandise = ({ locationId, locationName }) => {
                   <span
                     className={styles.delete}
                     onClick={() => handleDeleteProduct(row.id)}
-                    style={{ opacity: deletingId === row.id ? 0.5 : 1, cursor: "pointer" }}
+                    style={{
+                      opacity: deletingId === row.id ? 0.5 : 1,
+                      cursor: "pointer",
+                    }}
                   >
                     <MdDelete />
                   </span>

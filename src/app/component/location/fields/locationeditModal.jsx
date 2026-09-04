@@ -9,6 +9,12 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
   const [error, setError] = useState("");
   const [currentEmail, setCurrentEmail] = useState("");
 
+  const [divisions, setDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(true);
+  const [selectedDivisionIds, setSelectedDivisionIds] = useState(
+    Array.isArray(location?.divisions) ? location.divisions : [],
+  );
+
   useEffect(() => {
     fetch("/api/me")
       .then((res) => res.json())
@@ -16,9 +22,35 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
       .catch((err) => console.error("Failed to fetch current user", err));
   }, []);
 
+  useEffect(() => {
+    fetch("/api/divisions")
+      .then((res) => res.json())
+      .then((data) => setDivisions(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Failed to fetch divisions", err))
+      .finally(() => setLoadingDivisions(false));
+  }, []);
+
+  useEffect(() => {
+    setName(location?.name || "");
+    setSelectedDivisionIds(
+      Array.isArray(location?.divisions) ? location.divisions : [],
+    );
+  }, [location]);
+
+  const toggleDivision = (id) => {
+    setSelectedDivisionIds((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    );
+  };
+
   const handleUpdate = async () => {
     if (!name.trim()) {
       setError("Location name is required");
+      return;
+    }
+
+    if (!remarks.trim()) {
+      setError("Reason for change is required");
       return;
     }
 
@@ -33,6 +65,7 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
           name: name.trim(),
           remarks: remarks.trim(),
           email: currentEmail,
+          divisions: selectedDivisionIds,
         }),
       });
 
@@ -71,7 +104,32 @@ const LocationEditModal = ({ onClose, onUpdate, location }) => {
             </div>
 
             <div className={styles.section}>
-              <label>Reason for change</label>
+              <label>Divisions</label>
+              {loadingDivisions ? (
+                <p className={styles.helperText}>Loading divisions...</p>
+              ) : divisions.length === 0 ? (
+                <p className={styles.helperText}>No divisions available.</p>
+              ) : (
+                <div className={styles.divisionGrid}>
+                  {divisions.map((division) => (
+                    <label
+                      key={division.id}
+                      className={styles.divisionOption}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedDivisionIds.includes(division.id)}
+                        onChange={() => toggleDivision(division.id)}
+                      />
+                      {division.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.section}>
+              <label>Reason for change *</label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}

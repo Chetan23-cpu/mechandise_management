@@ -61,7 +61,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { itemCode, name, selfLocation, status, location, email, image } = body;
+    const { itemCode, name, selfLocation, status, location, divisionId, email, image } = body;
 
     if (!itemCode || itemCode.trim() === "") {
       return NextResponse.json(
@@ -116,6 +116,7 @@ export async function POST(request) {
       shelf_location: selfLocation.trim(),
       status: status.toString().trim(),
       location: location.toString(),
+      divisions: divisionId ? divisionId.toString() : null,
       image: imageToStore,
     });
 
@@ -124,10 +125,15 @@ export async function POST(request) {
     const locationRow = await db("locations").where({ id: newReusable.location }).first();
     const locationName = locationRow?.name || newReusable.location;
 
+    const divisionRow = newReusable.divisions
+      ? await db("divisions").where({ id: newReusable.divisions }).first()
+      : null;
+    const divisionName = divisionRow?.name || "—";
+
     await logActivity({
       email: email || "unknown",
       action: "Reusable Product Added",
-      comment: `${newReusable.name} (${newReusable.itemCode}) added to shelf ${newReusable.shelf_location}, location: ${locationName}`,
+      comment: `${newReusable.name} (${newReusable.itemCode}) added to shelf ${newReusable.shelf_location}, division: ${divisionName}, location: ${locationName}`,
       locationId: location,
     });
 

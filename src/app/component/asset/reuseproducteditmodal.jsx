@@ -17,12 +17,51 @@ const ReuseProductEditModal = ({ onClose, onUpdate, reuseProduct }) => {
   const [imageError, setImageError] = useState("");
   const [currentEmail, setCurrentEmail] = useState("");
 
+  const [availableDivisions, setAvailableDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(true);
+  const [divisionId, setDivisionId] = useState(
+    reuseProduct?.divisions !== undefined && reuseProduct?.divisions !== null
+      ? String(reuseProduct.divisions)
+      : "",
+  );
+
   useEffect(() => {
     fetch("/api/me")
       .then((res) => res.json())
       .then((data) => setCurrentEmail(data.user?.email || ""))
       .catch((err) => console.error("Failed to fetch current user", err));
   }, []);
+
+  useEffect(() => {
+    if (!reuseProduct?.location) {
+      setAvailableDivisions([]);
+      setLoadingDivisions(false);
+      return;
+    }
+
+    setLoadingDivisions(true);
+
+    Promise.all([
+      fetch("/api/locations").then((res) => res.json()),
+      fetch("/api/divisions").then((res) => res.json()),
+    ])
+      .then(([locationsData, divisionsData]) => {
+        const locations = Array.isArray(locationsData) ? locationsData : [];
+        const allDivisions = Array.isArray(divisionsData) ? divisionsData : [];
+
+        const currentLocation = locations.find(
+          (loc) => String(loc.id) === String(reuseProduct.location),
+        );
+        const assignedIds = Array.isArray(currentLocation?.divisions)
+          ? currentLocation.divisions
+          : [];
+
+        const scoped = allDivisions.filter((d) => assignedIds.includes(d.id));
+        setAvailableDivisions(scoped);
+      })
+      .catch((err) => console.error("Failed to fetch divisions", err))
+      .finally(() => setLoadingDivisions(false));
+  }, [reuseProduct?.location]);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -70,6 +109,10 @@ const ReuseProductEditModal = ({ onClose, onUpdate, reuseProduct }) => {
       setError("Item code, name, shelf location and reason are required");
       return;
     }
+    if (availableDivisions.length > 0 && !divisionId) {
+      setError("Please select a division");
+      return;
+    }
     if (imageError) {
       setError("Please fix the image error before saving");
       return;
@@ -79,6 +122,7 @@ const ReuseProductEditModal = ({ onClose, onUpdate, reuseProduct }) => {
       itemCode: itemCode.trim(),
       name: name.trim(),
       shelfLocation: shelfLocation.trim(),
+      divisionId: divisionId || null,
       reason: reason.trim(),
       email: currentEmail,
       // if a new image was picked, send it; if removed, send "" to clear it;
@@ -145,6 +189,30 @@ const ReuseProductEditModal = ({ onClose, onUpdate, reuseProduct }) => {
                 onChange={(e) => setShelfLocation(e.target.value)}
                 className={styles.modalinput}
               ></input>
+            </div>
+
+            <div className={styles.section}>
+              <label>Division</label>
+              {loadingDivisions ? (
+                <p className={styles.fielderror}>Loading divisions...</p>
+              ) : availableDivisions.length === 0 ? (
+                <p className={styles.fielderror}>
+                  No divisions assigned to this location
+                </p>
+              ) : (
+                <select
+                  className={styles.modalinput}
+                  value={divisionId}
+                  onChange={(e) => setDivisionId(e.target.value)}
+                >
+                  <option value="">Select a division</option>
+                  {availableDivisions.map((division) => (
+                    <option key={division.id} value={division.id}>
+                      {division.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className={styles.section}>

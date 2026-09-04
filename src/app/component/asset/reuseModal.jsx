@@ -20,12 +20,47 @@ const ReuseProductAddModal = ({
   const [errors, setErrors] = useState({});
   const [currentEmail, setCurrentEmail] = useState("");
 
+  const [availableDivisions, setAvailableDivisions] = useState([]);
+  const [loadingDivisions, setLoadingDivisions] = useState(true);
+  const [divisionId, setDivisionId] = useState("");
+
   useEffect(() => {
     fetch("/api/me")
       .then((res) => res.json())
       .then((data) => setCurrentEmail(data.user?.email || ""))
       .catch((err) => console.error("Failed to fetch current user", err));
   }, []);
+
+  useEffect(() => {
+    if (!locationId) {
+      setAvailableDivisions([]);
+      setLoadingDivisions(false);
+      return;
+    }
+
+    setLoadingDivisions(true);
+
+    Promise.all([
+      fetch("/api/locations").then((res) => res.json()),
+      fetch("/api/divisions").then((res) => res.json()),
+    ])
+      .then(([locationsData, divisionsData]) => {
+        const locations = Array.isArray(locationsData) ? locationsData : [];
+        const allDivisions = Array.isArray(divisionsData) ? divisionsData : [];
+
+        const currentLocation = locations.find(
+          (loc) => String(loc.id) === String(locationId),
+        );
+        const assignedIds = Array.isArray(currentLocation?.divisions)
+          ? currentLocation.divisions
+          : [];
+
+        const scoped = allDivisions.filter((d) => assignedIds.includes(d.id));
+        setAvailableDivisions(scoped);
+      })
+      .catch((err) => console.error("Failed to fetch divisions", err))
+      .finally(() => setLoadingDivisions(false));
+  }, [locationId]);
 
   const validate = () => {
     const newErrors = {};
@@ -36,6 +71,8 @@ const ReuseProductAddModal = ({
       newErrors.selfLocation = "Please enter self location";
     if (!locationId) newErrors.location = "No location selected";
     if (!status.trim()) newErrors.status = "Please enter status";
+    if (availableDivisions.length > 0 && !divisionId)
+      newErrors.division = "Please select a division";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,6 +135,7 @@ const ReuseProductAddModal = ({
           selfLocation,
           location: locationId,
           status,
+          divisionId: divisionId || null,
           email: currentEmail,
           image,
         }),
@@ -173,6 +211,33 @@ const ReuseProductAddModal = ({
             </div>
             {errors.location && (
               <p className={styles.fielderror}>{errors.location}</p>
+            )}
+
+            <div className={styles.section}>
+              <label>Division</label>
+              {loadingDivisions ? (
+                <p className={styles.fielderror}>Loading divisions...</p>
+              ) : availableDivisions.length === 0 ? (
+                <p className={styles.fielderror}>
+                  No divisions assigned to this location
+                </p>
+              ) : (
+                <select
+                  className={styles.modalinput}
+                  value={divisionId}
+                  onChange={(e) => setDivisionId(e.target.value)}
+                >
+                  <option value="">Select a division</option>
+                  {availableDivisions.map((division) => (
+                    <option key={division.id} value={division.id}>
+                      {division.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {errors.division && (
+              <p className={styles.fielderror}>{errors.division}</p>
             )}
 
             <div className={styles.section}>

@@ -6,6 +6,7 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const locationId = searchParams.get("locationId");
         const search = searchParams.get("search");
+        const status = searchParams.get("status");
         const page = parseInt(searchParams.get("page") || "1", 10);
         const limit = parseInt(searchParams.get("limit") || "10", 10);
         const offset = (page - 1) * limit;
@@ -18,10 +19,17 @@ export async function GET(request) {
                 })
                 .leftJoin("reusables as re", function () {
                     this.on("ri.product_id", "=", "re.id").andOnVal("ri.type", "=", "reusable");
+                })
+                .leftJoin("print_pos as pp", function () {
+                    this.on("ri.product_id", "=", "pp.id").andOnVal("ri.type", "=", "print_pos");
                 });
 
             if (locationId) {
                 qb = qb.where("r.location", locationId);
+            }
+
+            if (status) {
+                qb = qb.where("ri.status", status);
             }
 
             if (search && search.trim() !== "") {
@@ -33,7 +41,7 @@ export async function GET(request) {
                         .orWhereRaw("LOWER(r.requested_to) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.type) LIKE ?", [term])
                         .orWhereRaw("LOWER(ri.status) LIKE ?", [term])
-                        .orWhereRaw("LOWER(COALESCE(m.name, re.name)) LIKE ?", [term]);
+                        .orWhereRaw("LOWER(COALESCE(m.name, re.name, pp.name)) LIKE ?", [term]);
                 });
             }
 
@@ -54,15 +62,17 @@ export async function GET(request) {
                 "r.name",
                 "r.requested_to",
                 "r.created_at as date",
-                db.raw("COALESCE(m.name, re.name) as item_name"),
+                "r.divisions as divisions",
+                db.raw("COALESCE(m.name, re.name, pp.name) as item_name"),
                 "m.quantity as merch_quantity",
+                "pp.quantity as print_pos_quantity",
                 "re.status as reusable_status"
             )
             .orderBy("r.created_at", "desc")
             .limit(limit)
             .offset(offset);
 
-        // merchandise: use its stock quantity directly.
+        // merchandise & print_pos: use their stock quantity directly.
         // reusable: reusables don't track a numeric stock count — instead
         // their own `status` column tells us if the single unit is
         // available: "store" means it's on the shelf (1 available),
@@ -70,6 +80,9 @@ export async function GET(request) {
         const getAvailableQuantity = (row) => {
             if (row.type === "merchandise") {
                 return row.merch_quantity ?? null;
+            }
+            if (row.type === "print_pos") {
+                return row.print_pos_quantity ?? null;
             }
             if (row.type === "reusable") {
                 const status = (row.reusable_status || "").toLowerCase();
@@ -90,6 +103,7 @@ export async function GET(request) {
             email: i.name,
             requested_to: i.requested_to,
             date: i.date,
+            divisions: i.divisions,
             type: i.type,
             itemName: i.item_name || "Unknown",
             quantity: i.quantity,
