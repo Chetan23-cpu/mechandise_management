@@ -6,10 +6,17 @@ export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, email } = body;
+    const { status, email, reason } = body;
 
     if (!["approved", "declined"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    if (status === "declined" && (!reason || !reason.trim())) {
+      return NextResponse.json(
+        { error: "A reason is required to decline this request" },
+        { status: 400 },
+      );
     }
 
     const existingItem = await db("request_items").where({ id }).first();
@@ -151,13 +158,16 @@ export async function PATCH(request, { params }) {
       productName = product?.name || "Unknown product";
     }
 
+    const reasonText =
+      status === "declined" && reason ? ` Reason: ${reason.trim()}` : "";
+
     await logActivity({
       email: email || "unknown",
       action: status === "approved" ? "Request Approved" : "Request Declined",
       comment:
         `Request ${parentRequest?.request_no || existingItem.request_id} — ` +
         `${status} "${productName}" (${existingItem.type}, qty: ${existingItem.quantity}) ` +
-        `requested by ${parentRequest?.email || "unknown"}`,
+        `requested by ${parentRequest?.email || "unknown"}.${reasonText}`,
       locationId: parentRequest?.location,
     });
 

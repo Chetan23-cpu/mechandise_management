@@ -226,7 +226,7 @@ export async function POST(request) {
     await logActivity({
       email: email.trim(),
       action: "Request Submitted",
-      comment: `Request ${savedRequest.request_no} submitted with ${savedItems.length} item(s), location: ${locationName}${divisionName ? `, division: ${divisionName}` : ""}, requested to: ${requestedTo.trim()}. Reason: ${reason.trim()}`,
+      comment: `Request ${savedRequest.request_no} submitted by ${name.trim()} (${email.trim()}) with ${savedItems.length} item(s), location: ${locationName}${divisionName ? `, division: ${divisionName}` : ""}, requested to: ${requestedTo.trim()}. Reason: ${reason.trim()}`,
       locationId: locationId,
     });
 
