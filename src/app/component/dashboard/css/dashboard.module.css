@@ -6,18 +6,20 @@
 
 .toprow {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   width: 100%;
   padding: 30px 50px;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .secondrow {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   width: 100%;
   padding: 0px 50px;
-  align-items: center;
+  align-items: start;
+  box-sizing: border-box;
 }
