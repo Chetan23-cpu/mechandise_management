@@ -10,6 +10,7 @@ export async function GET(request) {
     const productCode = searchParams.get("productCode") || null;
     const startDate = searchParams.get("startDate") || null; // 'YYYY-MM-DD'
     const endDate = searchParams.get("endDate") || null; // 'YYYY-MM-DD'
+    const period = searchParams.get("period") || null; // "monthly" | "quarterly" | "yearly"
 
     let query = db("dashboard_data as dd")
       .leftJoin("merchandises as m", "dd.product_code", "m.item_code")
@@ -36,11 +37,21 @@ export async function GET(request) {
     if (productCode) {
       query = query.whereRaw("LOWER(TRIM(dd.product_code)) = LOWER(TRIM(?))", [productCode]);
     }
+
+    // Explicit date range always takes priority over period-based scoping.
     if (startDate) {
       query = query.where("dd.created_at", ">=", `${startDate} 00:00:00`);
     }
     if (endDate) {
       query = query.where("dd.created_at", "<=", `${endDate} 23:59:59`);
+    }
+
+    // If no explicit date range was given, fall back to the same
+    // current-year scoping used by the chart: monthly/quarterly restrict
+    // to this year, yearly shows every year on record.
+    if (!startDate && !endDate && (period === "monthly" || period === "quarterly")) {
+      const currentYear = new Date().getFullYear();
+      query = query.whereRaw("YEAR(dd.created_at) = ?", [currentYear]);
     }
 
     const rows = await query;

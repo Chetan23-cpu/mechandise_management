@@ -115,7 +115,7 @@ const MidCard1 = () => {
     loadingOptions,
   ]);
 
-  // Fetch table data whenever filters (including date range) change
+  // Fetch table data whenever filters (including date range and period) change
   useEffect(() => {
     let cancelled = false;
 
@@ -124,6 +124,7 @@ const MidCard1 = () => {
       try {
         const params = new URLSearchParams({
           productType: "merchandise",
+          period,
         });
         if (selectedLocation) params.set("locationId", selectedLocation);
         if (selectedDivision) params.set("divisionId", selectedDivision);
@@ -149,6 +150,7 @@ const MidCard1 = () => {
       cancelled = true;
     };
   }, [
+    period,
     selectedLocation,
     selectedDivision,
     resolvedProductCode,
@@ -259,7 +261,7 @@ const MidCard1 = () => {
   return (
     <div>
       <div className={styles.card}>
-        <div className={styles.title}>
+        <div className={styles.title}> 
           <div>
             <div className={styles.heading}>Merchandise Wise Movement</div>
           </div>
