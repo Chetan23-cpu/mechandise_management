@@ -203,7 +203,18 @@ export async function DELETE(request, { params }) {
             .first();
         const locationName = locationRow?.name || existingPrintPos.location;
 
-        await db("print_pos").where({ id }).del();
+        await db.transaction(async (trx) => {
+            await trx("print_pos").where({ id }).del();
+
+            // Remove this product's movement history from dashboard_data too,
+            // matching on item_code = product_code
+            await trx("dashboard_data")
+                .where({
+                    product_code: existingPrintPos.item_code,
+                    product_type: "print_pos",
+                })
+                .del();
+        });
 
         await logActivity({
             email: email || "unknown",
