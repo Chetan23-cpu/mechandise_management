@@ -178,6 +178,15 @@ const RequestForm = () => {
     return product.quantity ?? null;
   };
 
+  // look up a product's stored image, used for the thumbnail next to each row
+  const getProductImage = (productId) => {
+    if (!productId) return null;
+    const product = products.find(
+      (p) => String(p.id) === String(productId),
+    );
+    return product?.image || null;
+  };
+
   const handleProductChange = (index, productId) => {
     setRows((prev) =>
       prev.map((row, i) => (i === index ? { ...row, productId } : row)),
@@ -419,9 +428,21 @@ const RequestForm = () => {
               {rows.map((row, index) => {
                 const isLastRow = index === rows.length - 1;
                 const availableQty = getAvailableQuantity(row.productId);
+                const productImage = getProductImage(row.productId);
 
                 const rowInputs = (
                   <div className={styles.productInputs}>
+                    {productImage ? (
+                      <div className={styles.thumbWrapper}>
+                        <img
+                          src={productImage}
+                          alt="Product"
+                          className={styles.thumb}
+                        />
+                      </div>
+                    ) : (
+                      <div className={styles.thumbPlaceholder}>—</div>
+                    )}
                     <select
                       value={row.productId}
                       onChange={(e) =>
