@@ -181,6 +181,9 @@
     background-color: #5C5CFF;
     color: #fff;
     font-size: 15px;
+    position: sticky;
+    top: var(--topnav-height, 90px);
+    z-index: 2;
 }
 
 .head:first-child{
@@ -346,4 +349,12 @@
 
 .pending{
     color:#ee6b6e;
+}
+.table{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    padding: 30px 0;
+    box-sizing: border-box;
+    table-layout: fixed;
 }

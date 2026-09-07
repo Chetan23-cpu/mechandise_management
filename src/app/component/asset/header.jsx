@@ -12,6 +12,7 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef(null);
+  const headerRef = useRef(null);
 
   // close the dropdown when clicking anywhere outside it
   useEffect(() => {
@@ -22,6 +23,25 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Expose this header's actual rendered height as a CSS variable, so
+  // any sticky table header elsewhere on the page can offset itself
+  // correctly below this bar without hardcoding a guessed pixel value.
+  useEffect(() => {
+    if (!headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      const height = headerRef.current.offsetHeight;
+      document.documentElement.style.setProperty("--topnav-height", `${height}px`);
+    };
+
+    updateHeaderHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    resizeObserver.observe(headerRef.current);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   const handleLogout = async () => {
@@ -37,9 +57,6 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
     }
   };
 
-  // On the locations page itself, these buttons switch a local tab.
-  // On any other page (e.g. the asset page), there's no local tab to
-  // switch, so fall back to navigating to the locations page instead.
   const goToLocationTab = () => {
     if (onTabChange) {
       onTabChange("location");
@@ -57,7 +74,7 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
   };
 
   return (
-    <div className={styles.main}>
+    <div className={styles.main} ref={headerRef}>
       <div className={styles.imagesec}>
         <Image
                   src="/images/logo.png"
@@ -111,5 +128,3 @@ const AssetHeader = ({ activeTab, onTabChange }) => {
 };
 
 export default AssetHeader;
-
-  

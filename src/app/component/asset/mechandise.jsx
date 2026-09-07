@@ -220,7 +220,7 @@ const Merchandise = ({ locationId, locationName }) => {
           <div className={styles.text}>Add Product</div>
         </div>
       </div>
-
+       <div className={styles.tableWrapper}>
       <table className={styles.table}>
         <thead>
           <tr className={styles.tableheading}>
@@ -291,7 +291,7 @@ const Merchandise = ({ locationId, locationName }) => {
           )}
         </tbody>
       </table>
-
+      </div>
       <div className={styles.pagination}>
         <button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
