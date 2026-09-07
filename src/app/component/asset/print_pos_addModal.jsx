@@ -15,6 +15,7 @@ const PrintPosAddModal = ({
   const [selfLocation, setSelfLocation] = useState("");
   const [quantity, setQuantity] = useState("");
   const [minquantity, setMinQuantity] = useState("");
+  const [lastSupplier, setLastSupplier] = useState("");
   const [image, setImage] = useState(""); // base64 data URL
   const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,6 +137,7 @@ const PrintPosAddModal = ({
           selfLocation,
           quantity,
           minquantity,
+          lastSupplier,
           location: locationId,
           divisionId: divisionId || null,
           email: currentEmail,
@@ -226,6 +228,19 @@ const PrintPosAddModal = ({
             </div>
             {errors.minquantity && (
               <p className={styles.fielderror}>{errors.minquantity}</p>
+            )}
+
+            <div className={styles.section}>
+              <label>Last Supplier</label>
+              <input
+                placeholder="Enter Last Supplier..."
+                className={styles.modalinput}
+                value={lastSupplier}
+                onChange={(e) => setLastSupplier(e.target.value)}
+              />
+            </div>
+            {errors.lastSupplier && (
+              <p className={styles.fielderror}>{errors.lastSupplier}</p>
             )}
 
             <div className={styles.section}>

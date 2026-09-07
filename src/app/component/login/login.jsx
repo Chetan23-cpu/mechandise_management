@@ -110,7 +110,6 @@ const Login = () => {
       <div className={styles.head1}>Merchandise and Asset Management System</div>
       </div>
     <div className={styles.main}>
-
       <div style={{ perspective: 1200 }}>
         <AnimatePresence mode="wait">
           {view === "login" ? (

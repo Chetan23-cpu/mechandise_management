@@ -142,13 +142,14 @@ const PrintPos = ({ locationId, locationName }) => {
 
       autoTable(doc, {
         startY: searchTerm.trim() ? 28 : 22,
-        head: [["S.No", "Item Code", "Item", "Shelf Location", "Quantity"]],
+        head: [["S.No", "Item Code", "Item", "Shelf Location", "Quantity", "Last Supplier"]],
         body: allRows.map((row, index) => [
           index + 1,
           row.item_code,
           row.name,
           row.shelf,
           row.quantity,
+          row.last_supplier || "—",
         ]),
         styles: { fontSize: 9 },
         headStyles: { fillColor: [92, 92, 255] },
@@ -230,17 +231,18 @@ const PrintPos = ({ locationId, locationName }) => {
             <th className={styles.head}>Shelf Location</th>
             <th className={styles.head}>Quantity</th>
             <th className={styles.head}>Min Quantity</th>
+            <th className={styles.head}>Last Supplier</th>
             <th className={styles.head}>Action</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="7">Loading...</td>
+              <td colSpan="9">Loading...</td>
             </tr>
           ) : stockData.length === 0 ? (
             <tr>
-              <td colSpan="7">No items found for this location.</td>
+              <td colSpan="9">No items found for this location.</td>
             </tr>
           ) : (
             stockData.map((row, index) => (
@@ -265,6 +267,7 @@ const PrintPos = ({ locationId, locationName }) => {
                 <td>{row.shelf}</td>
                 <td>{row.quantity}</td>
                 <td>{row.minquantity}</td>
+                <td>{row.last_supplier || "—"}</td>
                 <td className={styles.button}>
                   <span
                     className={styles.edit}

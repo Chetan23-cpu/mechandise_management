@@ -66,6 +66,7 @@ export async function POST(request) {
       selfLocation,
       quantity,
       minquantity,
+      lastSupplier,
       location,
       divisionId,
       email,
@@ -169,6 +170,7 @@ export async function POST(request) {
         shelf_location: selfLocation.trim(),
         quantity: quantity.toString().trim(),
         minquantity: minquantity.toString().trim(),
+        last_supplier: lastSupplier && lastSupplier.trim() !== "" ? lastSupplier.trim() : null,
         location: location.toString(),
         divisions: divisionId.toString(),
         image: imageToStore,
@@ -197,7 +199,7 @@ export async function POST(request) {
     await logActivity({
       email: email || "unknown",
       action: "Merchandise Created",
-      comment: `Created "${newMerchandise.name}" (code: ${newMerchandise.item_code}) — qty: ${newMerchandise.quantity}, shelf: ${newMerchandise.shelf_location}, location: ${locationName}`,
+      comment: `Created "${newMerchandise.name}" (code: ${newMerchandise.item_code}) — qty: ${newMerchandise.quantity}, shelf: ${newMerchandise.shelf_location}, location: ${locationName}${newMerchandise.last_supplier ? `, last supplier: ${newMerchandise.last_supplier}` : ""}`,
       locationId: newMerchandise.location,
     });
 

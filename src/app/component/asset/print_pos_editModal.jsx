@@ -20,6 +20,7 @@ const EditPrintPosModal = ({ onClose, onUpdate, product }) => {
       ? String(product.minquantity)
       : ""
   );
+  const [lastSupplier, setLastSupplier] = useState(product?.last_supplier || "");
   const [reason, setReason] = useState("");
   const [image, setImage] = useState(product?.image || ""); // base64 data URL or existing value
   const [imagePreview, setImagePreview] = useState(product?.image || "");
@@ -140,6 +141,7 @@ const EditPrintPosModal = ({ onClose, onUpdate, product }) => {
       shelfLocation: shelfLocation.trim(),
       quantity: quantity.toString().trim(),
       minquantity: minquantity.toString().trim(),
+      lastSupplier: lastSupplier.trim(),
       divisionId: divisionId || null,
       reason: reason.trim(),
       email: currentEmail,
@@ -228,6 +230,17 @@ const EditPrintPosModal = ({ onClose, onUpdate, product }) => {
                 className={styles.modalinput}
               ></input>
               {errors.minquantity && <p className={styles.fielderror}>{errors.minquantity}</p>}
+            </div>
+
+            <div className={styles.section}>
+              <label>Last Supplier</label>
+              <input
+                value={lastSupplier}
+                onChange={(e) => setLastSupplier(e.target.value)}
+                placeholder="Enter Last Supplier..."
+                className={styles.modalinput}
+              ></input>
+              {errors.lastSupplier && <p className={styles.fielderror}>{errors.lastSupplier}</p>}
             </div>
 
             <div className={styles.section}>

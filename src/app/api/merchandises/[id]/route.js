@@ -13,7 +13,7 @@ export async function PUT(request, { params }) {
         }
 
         const body = await request.json();
-        const { itemCode, name, shelfLocation, quantity, minquantity, divisionId, reason, email, image } = body;
+        const { itemCode, name, shelfLocation, quantity, minquantity, lastSupplier, divisionId, reason, email, image } = body;
 
         if (!itemCode || itemCode.trim() === "") {
             return NextResponse.json({ error: "Item Code is required" }, { status: 400 });
@@ -56,6 +56,12 @@ export async function PUT(request, { params }) {
             quantity: parsedQuantity,
             minquantity: parsedMinQuantity,
         };
+
+        // lastSupplier is optional — only touch the column if the caller
+        // explicitly sent the field (present, even if empty)
+        if (Object.prototype.hasOwnProperty.call(body, "lastSupplier")) {
+            updatePayload.last_supplier = lastSupplier && lastSupplier.trim() !== "" ? lastSupplier.trim() : null;
+        }
 
         // divisionId is optional on update — only touch the column if the
         // caller explicitly sent the field (present, even if null/empty)
@@ -150,6 +156,9 @@ export async function PUT(request, { params }) {
         }
         if (existingProduct.minquantity !== updatedMerchandise.minquantity) {
             changes.push(`min qty: ${existingProduct.minquantity} → ${updatedMerchandise.minquantity}`);
+        }
+        if (String(existingProduct.last_supplier || "") !== String(updatedMerchandise.last_supplier || "")) {
+            changes.push(`last supplier: ${existingProduct.last_supplier || "—"} → ${updatedMerchandise.last_supplier || "—"}`);
         }
         if (String(existingProduct.divisions || "") !== String(updatedMerchandise.divisions || "")) {
             changes.push(`division: ${existingDivisionName} → ${updatedDivisionName}`);
