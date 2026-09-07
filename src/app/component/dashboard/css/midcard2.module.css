@@ -70,6 +70,7 @@
     align-items: center;
     gap: 8px;
     flex: 1;
+    min-width: 0;
 }
 
 .subtitle {
@@ -82,6 +83,7 @@
 
 .select {
     flex: 1;
+    min-width: 0;
     padding: 8px 12px;
     font-size: 13px;
     color: black;
@@ -92,6 +94,9 @@
     cursor: pointer;
     outline: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .select:hover:not(:disabled) {
@@ -163,6 +168,7 @@
 .tableScroll {
     height: 100%;
     overflow-y: auto;
+    overflow-x: auto;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.6);
 }
