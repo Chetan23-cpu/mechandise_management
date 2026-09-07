@@ -231,7 +231,6 @@ const PrintPos = ({ locationId, locationName }) => {
             <th className={styles.head}>Shelf Location</th>
             <th className={styles.head}>Quantity</th>
             <th className={styles.head}>Min Quantity</th>
-            <th className={styles.head}>Last Supplier</th>
             <th className={styles.head}>Action</th>
           </tr>
         </thead>
@@ -267,7 +266,6 @@ const PrintPos = ({ locationId, locationName }) => {
                 <td>{row.shelf}</td>
                 <td>{row.quantity}</td>
                 <td>{row.minquantity}</td>
-                <td>{row.last_supplier || "—"}</td>
                 <td className={styles.button}>
                   <span
                     className={styles.edit}
