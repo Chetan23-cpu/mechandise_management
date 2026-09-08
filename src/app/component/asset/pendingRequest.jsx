@@ -210,7 +210,7 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                     new Date(row.date).toLocaleDateString(),
                     getDivisionName(row.divisions),
                     row.type,
-                    row.itemName,
+                    `${row.itemName}${row.itemCode ? ` (${row.itemCode})` : ""}`,
                     row.quantity,
                     row.status,
                 ]),
@@ -255,12 +255,6 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                         <div>{isDownloading ? "Preparing..." : "Download"}</div>
                     </div>
                 </div>
-                <select>
-                    <option>All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="declined">Declined</option>
-                </select>
             </div>
 
             <table className={styles.table}>
@@ -297,7 +291,10 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
                                 <td>{new Date(row.date).toLocaleDateString()}</td>
                                 <td>{getDivisionName(row.divisions)}</td>
                                 <td>{row.type.charAt(0).toUpperCase() + row.type.slice(1).toLowerCase()}</td>
-                                <td>{row.itemName}</td>
+                                <td>
+                                    {row.itemName}
+                                    {row.itemCode ? ` (${row.itemCode})` : ""}
+                                </td>
                                 <td>
                                     {row.status === "pending" ? (
                                         <span
@@ -384,5 +381,5 @@ const PendingRequest = ({ locationId, onStatusChanged }) => {
         </div>
     );
 };
-
+ 
 export default PendingRequest;

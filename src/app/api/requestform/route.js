@@ -73,7 +73,7 @@ export async function GET(request) {
 
       if (type === "merchandise") {
         let query = db("merchandises")
-          .select("id", "name", "quantity", "image")
+          .select("id", "name", "quantity", "image", "item_code")
           .where({ location: locationId });
         query = applyDivisionFilter(query);
         const products = await query.orderBy("name");
@@ -82,7 +82,7 @@ export async function GET(request) {
 
       if (type === "reusable") {
         let query = db("reusables")
-          .select("id", "name", "image")
+          .select("id", "name", "image", "itemCode")
           .where({ location: locationId });
         query = applyDivisionFilter(query);
         const products = await query.orderBy("name");
@@ -91,7 +91,7 @@ export async function GET(request) {
 
       if (type === "print_pos") {
         let query = db("print_pos")
-          .select("id", "name", "quantity", "image")
+          .select("id", "name", "quantity", "image", "item_code")
           .where({ location: locationId });
         query = applyDivisionFilter(query);
         const products = await query.orderBy("name");

@@ -170,20 +170,17 @@ const RequestForm = () => {
   // a confirmed stock column, so this returns null for them)
   const getAvailableQuantity = (productId) => {
     if (!productId) return null;
-    const product = products.find(
-      (p) => String(p.id) === String(productId),
-    );
+    const product = products.find((p) => String(p.id) === String(productId));
     if (!product) return null;
-    if (productType !== "merchandise" && productType !== "print_pos") return null;
+    if (productType !== "merchandise" && productType !== "print_pos")
+      return null;
     return product.quantity ?? null;
   };
 
   // look up a product's stored image, used for the thumbnail next to each row
   const getProductImage = (productId) => {
     if (!productId) return null;
-    const product = products.find(
-      (p) => String(p.id) === String(productId),
-    );
+    const product = products.find((p) => String(p.id) === String(productId));
     return product?.image || null;
   };
 
@@ -300,31 +297,33 @@ const RequestForm = () => {
   };
 
   return (
-    <> 
-    <div className={styles.main1}>
-      <div className={styles.imagesec}>
-        <Image
-                  src="/images/logo.png"
-                  alt="Access Denied"
-                  width={65}
-                  height={65} 
-                  style={{ width: "10%", maxWidth: "65px", height: "auto" }}
-                />
-      <div className={styles.head1}>Merchandise and Asset Management System</div>
-      </div>
-      <div className={styles.section1}>
-        <div
-          className={styles.button2}
-          onClick={() => router.push("/location")}
-        >
-          Locations
+    <>
+      <div className={styles.main1}>
+        <div className={styles.imagesec}>
+          <Image
+            src="/images/logo.png"
+            alt="Access Denied"
+            width={65}
+            height={65}
+            style={{ width: "10%", maxWidth: "65px", height: "auto" }}
+          />
+          <div className={styles.head1}>
+            Merchandise and Asset Management System
+          </div>
+        </div>
+        <div className={styles.section1}>
+          <div
+            className={styles.button2}
+            onClick={() => router.push("/location")}
+          >
+            Locations
+          </div>
         </div>
       </div>
-    </div>
       <div className={styles.main}>
         <div className={styles.heading}>
           <div>Request Form</div>
-        </div> 
+        </div>
         <div className={styles.form}>
           <div className={styles.section}>
             <label>Name</label>
@@ -334,11 +333,11 @@ const RequestForm = () => {
               placeholder="Enter your name"
               className={styles.input}
             ></input>
-          </div> 
+          </div>
           <div className={styles.section}>
             <label>Email</label>
             <input
-              value={email} 
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className={styles.input}
@@ -369,16 +368,20 @@ const RequestForm = () => {
               value={divisionId}
               onChange={(e) => setDivisionId(e.target.value)}
               className={styles.input}
-              disabled={!locationId || loadingDivisions || availableDivisions.length === 0}
+              disabled={
+                !locationId ||
+                loadingDivisions ||
+                availableDivisions.length === 0
+              }
             >
               <option value="">
                 {!locationId
                   ? "Select a location first"
                   : loadingDivisions
-                  ? "Loading divisions..."
-                  : availableDivisions.length === 0
-                  ? "No divisions assigned to this location"
-                  : "Select Division"}
+                    ? "Loading divisions..."
+                    : availableDivisions.length === 0
+                      ? "No divisions assigned to this location"
+                      : "Select Division"}
               </option>
               {availableDivisions.map((division) => (
                 <option key={division.id} value={division.id}>
@@ -456,7 +459,7 @@ const RequestForm = () => {
                       </option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {p.name} ({p.item_code || p.itemCode || "—"})
                         </option>
                       ))}
                     </select>
@@ -471,9 +474,7 @@ const RequestForm = () => {
                       disabled={productType === "reusable"}
                     ></input>
                     <input
-                      value={
-                        availableQty === null ? "" : availableQty
-                      }
+                      value={availableQty === null ? "" : availableQty}
                       className={styles.input_q}
                       placeholder="Available Qty"
                       readOnly

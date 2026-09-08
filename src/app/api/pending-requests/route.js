@@ -64,6 +64,7 @@ export async function GET(request) {
                 "r.created_at as date",
                 "r.divisions as divisions",
                 db.raw("COALESCE(m.name, re.name, pp.name) as item_name"),
+                db.raw("COALESCE(m.item_code, re.itemCode, pp.item_code) as item_code"),
                 "m.quantity as merch_quantity",
                 "pp.quantity as print_pos_quantity",
                 "re.status as reusable_status"
@@ -106,6 +107,7 @@ export async function GET(request) {
             divisions: i.divisions,
             type: i.type,
             itemName: i.item_name || "Unknown",
+            itemCode: i.item_code || null,
             quantity: i.quantity,
             status: i.status,
             avl_qty: getAvailableQuantity(i),
