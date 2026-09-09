@@ -248,6 +248,12 @@ export async function POST(request) {
       .map((line) => `<li>${line}</li>`)
       .join("");
 
+    // Look up the approver's name for a personalized email greeting
+    const approverRow = await db("users")
+      .where({ email: requestedTo.trim() })
+      .first();
+    const approverName = approverRow?.name || requestedTo.trim();
+
     // Confirmation email to the requester — failures here never block the response
     await sendMail({
       to: email.trim(),
@@ -271,15 +277,26 @@ export async function POST(request) {
       to: requestedTo.trim(),
       subject: `New request awaiting your review — ${savedRequest.request_no}`,
       html: `
-                <p>Hello,</p>
-                <p>${name.trim()} (${email.trim()}) has submitted a merchandise request that needs your review.</p>
+                <p>Dear ${approverName},</p>
+                <p>A new merchandise request has been submitted and requires your review and approval.</p>
+                <p><strong>Request Details</strong></p>
+                <ul>
+                  <li><strong>Requester:</strong> ${name.trim()}</li>
+                  ${itemDetails
+                    .map(
+                      (line) => `<li><strong>Merchandise Item:</strong> ${line}</li>`,
+                    )
+                    .join("")}
+                  <li><strong>Location:</strong> ${locationName}</li>
+                  ${divisionName ? `<li><strong>Division:</strong> ${divisionName}</li>` : ""}
+                  <li><strong>Reason for Request:</strong> ${reason.trim()}</li>
+                </ul>
+                <p><strong>Additional Information</strong></p>
                 <p><strong>Request ID:</strong> ${savedRequest.request_no}</p>
-                <p><strong>Location:</strong> ${locationName}</p>
-                ${divisionName ? `<p><strong>Division:</strong> ${divisionName}</p>` : ""}
-                <p><strong>Reason:</strong> ${reason.trim()}</p>
-                <p><strong>Items:</strong></p>
-                <ul>${itemsListHtml}</ul>
-                <p>Please log in to review and approve or decline this request.</p>
+                <p><strong>Submitted On:</strong> ${new Date(savedRequest.created_at).toLocaleString()}</p>
+                <p><strong>Action Required</strong></p>
+                <p>Please sign in to the Merch Management System and review the request.</p>
+                <p>Best regards,<br>Merch Management System</p>
             `,
     });
 

@@ -1,6 +1,7 @@
 import db from "@/lib/db";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/logActivity";
+import { sendMail } from "@/lib/sendMail";
 
 export async function PATCH(request, { params }) {
   try {
@@ -170,6 +171,91 @@ export async function PATCH(request, { params }) {
         `requested by ${parentRequest?.email || "unknown"}.${reasonText}`,
       locationId: parentRequest?.location,
     });
+
+    // --- Email notifications ---
+    // Resolve names/location for the email bodies. Failures here never
+    // block the response — status has already been committed above.
+    try {
+      const locationRow = parentRequest?.location
+        ? await db("locations").where({ id: parentRequest.location }).first()
+        : null;
+      const locationName = locationRow?.name || "—";
+
+      const approverName = userRow?.name || email || "the approver";
+      const requesterName = parentRequest?.name || "there";
+      const requesterEmail = parentRequest?.email;
+      const approverEmail = parentRequest?.requested_to || email;
+
+      if (status === "approved") {
+        const approvedHtml = `
+                <p>Dear ${requesterName},</p>
+                <p>Good news! Your merchandise request has been reviewed and approved.</p>
+                <p><strong>Approved Request Details</strong></p>
+                <ul>
+                  <li><strong>Merchandise Item:</strong> ${productName}</li>
+                  <li><strong>Quantity:</strong> ${existingItem.quantity}</li>
+                  <li><strong>Location:</strong> ${locationName}</li>
+                  <li><strong>Reason for Request:</strong> ${parentRequest?.reason || "—"}</li>
+                  <li><strong>Approved By:</strong> ${approverName}</li>
+                  <li><strong>Request ID:</strong> ${parentRequest?.request_no || existingItem.request_id}</li>
+                </ul>
+                <p>Best regards,<br>Merch Management System</p>
+            `;
+
+        if (requesterEmail) {
+          await sendMail({
+            to: requesterEmail,
+            subject: `Your Merchandise Request Has Been Approved - ${productName}`,
+            html: approvedHtml,
+          });
+        }
+
+        if (approverEmail) {
+          await sendMail({
+            to: approverEmail,
+            subject: `Your Merchandise Request Has Been Approved - ${productName}`,
+            html: approvedHtml,
+          });
+        }
+      } else {
+        const declinedHtml = `
+                <p>Dear ${requesterName},</p>
+                <p>We regret to inform you that your merchandise request has not been approved.</p>
+                <p><strong>Request Details</strong></p>
+                <ul>
+                  <li><strong>Merchandise Item:</strong> ${productName}</li>
+                  <li><strong>Quantity:</strong> ${existingItem.quantity}</li>
+                  <li><strong>Location:</strong> ${locationName}</li>
+                  <li><strong>Reason for Request:</strong> ${parentRequest?.reason || "—"}</li>
+                  <li><strong>Reviewed By:</strong> ${approverName}</li>
+                  <li><strong>Request ID:</strong> ${parentRequest?.request_no || existingItem.request_id}</li>
+                </ul>
+                <p><strong>Decline Reason:</strong> ${reason ? reason.trim() : "—"}</p>
+                <p>If appropriate, you may revise the request and resubmit it after addressing the feedback provided above.</p>
+                <p>Should you require clarification regarding this decision, please contact ${approverName} or the Merchandising Team.</p>
+                <p>Thank you for your understanding.</p>
+                <p>Best regards,<br>Merch Management System</p>
+            `;
+
+        if (requesterEmail) {
+          await sendMail({
+            to: requesterEmail,
+            subject: `Merchandise Request Declined - ${productName}`,
+            html: declinedHtml,
+          });
+        }
+
+        if (approverEmail) {
+          await sendMail({
+            to: approverEmail,
+            subject: `Merchandise Request Declined - ${productName}`,
+            html: declinedHtml,
+          });
+        }
+      }
+    } catch (mailError) {
+      console.error("Failed to send status notification email", mailError);
+    }
 
     return NextResponse.json(updatedItem, { status: 200 });
   } catch (error) {
